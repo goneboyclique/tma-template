@@ -1,0 +1,30 @@
+{
+  "name": "@pkg/db",
+  "version": "1.0.0",
+  "type": "module",
+  "exports": {
+    "./client": "./src/client.ts",
+    "./schemas": "./generated/zod/schemas.ts"
+  },
+  "scripts": {
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "db:deploy": "prisma migrate deploy"
+  },
+  "devDependencies": {
+    "@tooling/env": "workspace:*",
+    "@tooling/typescript": "workspace:*",
+    "@types/node": "^24.12.4",
+    "prisma": "^7.8.0",
+    "prisma-zod-generator": "^2.1.4"
+  },
+  "dependencies": {
+    "@prisma/adapter-pg": "^7.8.0",
+    "@prisma/client": "^7.8.0",
+    "dotenv": "^17.4.2",
+    "pg": "^8.21.0"
+  },
+  "peerDependencies": {
+    "zod": "^4.4.3"
+  }
+}

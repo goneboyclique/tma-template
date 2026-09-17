@@ -1,0 +1,49 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "ui": "tui",
+
+  "globalEnv": ["DATABASE_URL"],
+
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build", "^db:generate"],
+      "outputs": ["dist/**"]
+    },
+
+    "dev": {
+      "env": ["PORT"],
+      "cache": false,
+      "persistent": true
+    },
+
+    "test": {
+      "dependsOn": ["^build"]
+    },
+
+    "start:prod": { "cache": false },
+
+    "lint": {
+      "dependsOn": ["^lint"],
+      "outputs": []
+    },
+
+    "db:generate": {
+      "env": ["DATABASE_URL"],
+      "cache": false
+    },
+
+    "db:migrate": {
+      "env": ["DATABASE_URL"],
+      "cache": false
+    },
+
+    "db:deploy": {
+      "env": ["DATABASE_URL"],
+      "cache": false
+    },
+
+    "sdk:generate": {
+      "outputs": ["clients/**"]
+    }
+  }
+}
