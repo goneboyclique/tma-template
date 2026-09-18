@@ -1,0 +1,16 @@
+{
+  "name": "@repo/madevs",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start:tg-dev": "tsx src/index.ts"
+  },
+  "devDependencies": {
+    "@tooling/typescript": "workspace:*",
+    "@types/node": "^26.2.0",
+    "tsx": "^4.20.3"
+  },
+  "dependencies": {
+    "untun": "^0.2.2"
+  }
+}
