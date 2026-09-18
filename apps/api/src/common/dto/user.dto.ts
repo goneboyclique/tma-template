@@ -14,6 +14,10 @@ const UserResSchema = UserSchema.pick({
 export class UserFindUniqueReqDto extends createZodDto(
   UserFindUniqueZodSchema,
 ) {}
-export class UserFindUniqueResDto extends createZodDto(
-  UserResSchema,
+export class UserFindUniqueResDto extends createZodDto(UserResSchema) {}
+
+export class UserUpdateTonAccountAddressDto extends createZodDto(
+  UserSchema.pick({ ton_wallet_address: true }),
 ) {}
+
+export class UserMeResDto extends createZodDto(UserResSchema) {}

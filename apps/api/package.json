@@ -23,6 +23,7 @@
     "@nestjs/swagger": "^11.4.4",
     "@pkg/db": "workspace:*",
     "@pkg/shared": "workspace:*",
+    "@tma.js/init-data-node": "^2.0.8",
     "cacheable": "^2.3.5",
     "fast-json-stable-stringify": "^2.1.0",
     "nestjs-zod": "^5.4.0",

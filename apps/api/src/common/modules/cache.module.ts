@@ -1,7 +1,7 @@
 import { Global, Module } from '@nestjs/common';
 import KeyvRedis from '@keyv/redis';
 import { KeyvCacheableMemory } from 'cacheable';
-import { env } from '@tooling/env/server';
+import { env } from '@tooling/env/tma';
 import { Cacheable } from 'cacheable';
 import { CACHE_CLIENT } from 'src/common/constants/cache.contants';
 

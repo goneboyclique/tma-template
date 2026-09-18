@@ -1,6 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { env } from '@tooling/env/server';
+import { env } from '@tooling/env/tma';
 import { makeSwagger } from './common/utils/swagger.utils';
 import { ZodValidationPipe } from 'nestjs-zod';
 import { ResponseInterceptor } from './common/interceptors/response.interceptor';

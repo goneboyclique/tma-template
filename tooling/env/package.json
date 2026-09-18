@@ -5,6 +5,7 @@
   "private": true,
   "exports": {
     "./server": "./src/server.ts",
+    "./tma": "./src/tma-api.ts",
     "./vite": "./src/vite.ts"
   },
   "peerDependencies": {

@@ -1,5 +1,5 @@
 import { INestApplication } from '@nestjs/common';
-import { env } from '@tooling/env/server';
+import { env } from '@tooling/env/tma';
 
 const CORS_ORIGINS = env.CORS_ORIGINS;
 
