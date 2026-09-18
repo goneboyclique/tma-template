@@ -13,6 +13,7 @@
     "dev": "turbo dev",
     "test": "turbo test",
     "lint": "turbo lint",
+    "start:tg-dev": "pnpm --filter @repo/madevs start:tg-dev",
     "format": "prettier --write \"**/*.{ts,tsx,md,json}\"",
     "db:generate": "turbo db:generate",
     "db:migrate": "turbo db:migrate",

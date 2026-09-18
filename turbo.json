@@ -2,16 +2,21 @@
   "$schema": "https://turbo.build/schema.json",
   "ui": "tui",
 
-  "globalEnv": ["DATABASE_URL"],
+  "globalEnv": ["DATABASE_URL", "VITE_API_URL"],
 
   "tasks": {
     "build": {
-      "dependsOn": ["^build", "^db:generate"],
+      "dependsOn": ["^db:generate"],
       "outputs": ["dist/**"]
     },
 
     "dev": {
-      "env": ["PORT"],
+      "cache": false,
+      "persistent": true,
+      "env": ["VITE_API_URL", "VITE_HTTPS"]
+    },
+
+    "start:tg-dev": {
       "cache": false,
       "persistent": true
     },
@@ -37,13 +42,19 @@
       "cache": false
     },
 
+    "db:reset": {
+      "env": ["DATABASE_URL"],
+      "cache": false
+    },
+
     "db:deploy": {
       "env": ["DATABASE_URL"],
       "cache": false
     },
 
     "sdk:generate": {
-      "outputs": ["clients/**"]
+      "cache": false
     }
   }
 }
+

@@ -9,7 +9,8 @@
     "./vite": "./src/vite.ts"
   },
   "peerDependencies": {
-    "zod": "^4.4.3"
+    "zod": "^4.4.3",
+    "vite": "^5.4.10"
   },
   "devDependencies": {
     "@tooling/typescript": "workspace:*",
