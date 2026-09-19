@@ -1,17 +1,22 @@
 import { fileURLToPath, URL } from "node:url";
 
-import { defineConfig } from "vite";
+import { defineConfig, searchForWorkspaceRoot } from "vite";
 import vue from "@vitejs/plugin-vue";
 import vueDevTools from "vite-plugin-vue-devtools";
 import mkcert from "vite-plugin-mkcert";
 import { initEnv, env } from "@tooling/env/vite";
+
+const workspaceRoot = searchForWorkspaceRoot(process.cwd());
+const base = "/tma";
 
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
   initEnv(mode);
 
   return {
-    base: "/tma",
+    base,
+    publicDir: "./public",
+    envDir: workspaceRoot,
     plugins: [
       vue(),
       vueDevTools(),
@@ -25,10 +30,49 @@ export default defineConfig(({ mode }) => {
         "@": fileURLToPath(new URL("./src", import.meta.url)),
       },
     },
-    publicDir: "./public",
     server: {
-      // Exposes your dev server and makes it accessible for the devices in the same network.
       host: true,
+      proxy: {
+        "/api": {
+          target: env.VITE_API_URL ?? "http://localhost:4000/",
+          changeOrigin: true,
+          secure: false,
+          rewrite: (path) => path.replace(/^\/api/, ""),
+          configure(proxy) {
+            proxy.on("proxyReq", (proxyReq, req) => {
+              console.log(
+                `[proxy] ${req.method} ${req.url} → ${env.VITE_API_URL}${req.url}`,
+              );
+            });
+
+            proxy.on("proxyRes", (proxyRes, req) => {
+              console.log(
+                `[proxy] ${proxyRes.statusCode} ${req.method} ${req.url}`,
+              );
+            });
+          },
+        },
+        "/socket.io": {
+          target: env.VITE_API_URL,
+          changeOrigin: true,
+          secure: false,
+          ws: true,
+          rewrite: (path) => path.replace(base, ""),
+          configure(proxy) {
+            proxy.on("proxyReq", (proxyReq, req) => {
+              console.log(
+                `[proxy] ${req.method} ${req.url} → ${env.VITE_API_URL}${req.url}`,
+              );
+            });
+
+            proxy.on("proxyRes", (proxyRes, req) => {
+              console.log(
+                `[proxy] ${proxyRes.statusCode} ${req.method} ${req.url}`,
+              );
+            });
+          },
+        },
+      },
     },
   };
 });

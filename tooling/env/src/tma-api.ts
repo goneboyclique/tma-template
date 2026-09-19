@@ -19,17 +19,6 @@ export const tmaApiEnvSchema = z.object({
 
   // tma specific variables
   TELEGRAM_BOT_TOKEN: z.string().min(1),
-  TONCENTER_API_URL: z
-    .string()
-    .default("https://testnet.toncenter.com/api/v2/jsonRPC"),
-  TONCENTER_WS_URL: z
-    .string()
-    .default("wss://testnet.toncenter.com/api/streaming/v2/ws"),
-  TONCENTER_API_KEY: z.string(),
-  PAYMENT_WALLET: z.string(),
-  // Jetton master contract address for USDT on TON, used to resolve
-  // per-user jetton wallets and to validate incoming jetton transfers.
-  USDT_JETTON_MASTER: z.string().min(1),
 });
 
 export const env = tmaApiEnvSchema.parse(process.env);

@@ -118,6 +118,8 @@ services:
       CACHE_TTL: ${CACHE_TTL:-60000}
       CORS_ORIGINS: ${CORS_ORIGINS:?required in .env (e.g. https://your-domain.tld)}
 
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:?required - bot whose init data authenticates callers}
+
     restart: unless-stopped
 
     # Don't start api until DB and Redis are healthy and migrations applied.
@@ -148,6 +150,40 @@ services:
       timeout: 5s
       retries: 5
       start_period: 20s
+
+  ton-payment-api:
+    image: ghcr.io/clayzenx/ton-payment-api:latest
+
+    restart: unless-stopped
+
+    environment:
+      # Your database. Use the service name of your Postgres container as the
+      # host (not `localhost`) when it runs in the same compose project.
+      #DATABASE_URL: ${DATABASE_URL:?required - e.g. postgresql://user:pass@postgres:5432/ton_payment}
+      DATABASE_URL: *database_url
+
+      # --- required: the merchant configuration ---
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:?required - bot whose init data authenticates callers}
+      PAYMENT_WALLET: ${PAYMENT_WALLET:?required - TON address that receives payments}
+      TONCENTER_API_KEY: ${TONCENTER_API_KEY:?required - https://toncenter.com}
+      USDT_JETTON_MASTER: ${USDT_JETTON_MASTER:?required - USDT jetton master for your network}
+
+      # --- optional (defaults are TESTNET) ---
+      TONCENTER_API_URL: ${TONCENTER_API_URL:-https://testnet.toncenter.com/api/v2/jsonRPC}
+      TONCENTER_WS_URL: ${TONCENTER_WS_URL:-wss://testnet.toncenter.com/api/streaming/v2/ws}
+      CORS_ORIGINS: ${CORS_ORIGINS:-*}
+      RUN_MIGRATIONS: ${RUN_MIGRATIONS:-true}
+
+      API_PORT: 4020
+
+    ports:
+      - "4020:4020"
+
+    # Reaching a database that lives in another compose project requires
+    # joining its network. Uncomment both blocks and set NETWORK to it.
+    networks:
+      - app_network
+
 
 # Docker managed persistent storage.
 volumes:
