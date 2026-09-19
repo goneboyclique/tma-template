@@ -1,6 +1,12 @@
 export type ApiClientConfig = {
   baseUrl: string;
   fetch?: typeof fetch;
+  /**
+   * Computed on every request and merged into its headers (e.g. auth
+   * tokens, Telegram init data). Explicit headers passed at the call site
+   * still win over these defaults.
+   */
+  getHeaders?: () => HeadersInit | undefined;
 };
 
 /**
@@ -19,7 +25,7 @@ let config: ApiClientConfig = {
   fetch: globalThis.fetch.bind(globalThis),
 };
 
-export function configureClient(next: ApiClientConfig) {
+export function configureClient(next: Partial<ApiClientConfig>) {
   config = {
     ...config,
     ...next,
@@ -32,7 +38,10 @@ export async function customFetch<T>(
 ): Promise<T> {
   const url = typeof input === "string" ? `${config.baseUrl}${input}` : input;
 
-  const res = await config.fetch!(url, init);
+  const headers = new Headers(config.getHeaders?.());
+  new Headers(init?.headers).forEach((value, key) => headers.set(key, value));
+
+  const res = await config.fetch!(url, { ...init, headers });
 
   if (!res.ok) {
     throw new Error(`HTTP ${res.status}`);

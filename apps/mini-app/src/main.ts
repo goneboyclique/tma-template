@@ -2,13 +2,13 @@ import "./assets/index.css";
 
 import { createApp } from "vue";
 import { retrieveLaunchParams } from "@tma.js/sdk-vue";
+import { QueryClient, VueQueryPlugin } from "@tanstack/vue-query";
 
 import App from "./App.vue";
 import router from "./router";
 import { errorHandler } from "./errorHandler";
 import { init } from "./init";
 import { TonConnectUIPlugin } from "./tonconnect";
-import { publicUrl } from "./helperts/publicUrl";
 
 // Mock the environment in case, we are outside Telegram.
 import "./mockEnv";
@@ -28,8 +28,15 @@ init({
   const app = createApp(App);
   app.config.errorHandler = errorHandler;
   app.use(router);
+  app.use(VueQueryPlugin, {
+    queryClient: new QueryClient(),
+  });
   app.use(TonConnectUIPlugin, {
-    manifestUrl: publicUrl("tonconnect-manifest.json"),
+    actionsConfiguration: {
+      twaReturnUrl: "https://t.me/tureborepo_bot?startapp",
+    },
+    manifestUrl:
+      "https://raw.githubusercontent.com/archiveplay/turborepo/refs/heads/tg-mini-app/apps/mini-app/public/tonconnect-manifest.json",
   });
   app.mount("#app");
 });

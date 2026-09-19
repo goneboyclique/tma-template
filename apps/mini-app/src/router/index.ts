@@ -5,6 +5,7 @@ import ThemeParamsPage from "@/pages/ThemeParamsPage.vue";
 import LaunchParamsPage from "@/pages/LaunchParamsPage.vue";
 import TonConnectPage from "@/pages/TonConnectPage.vue";
 import IconTonConnect from "@/components/IconTonConnect.vue";
+import MePage from "@/pages/MePage.vue";
 
 export const routes = [
   {
@@ -43,6 +44,14 @@ export const routes = [
     meta: {
       icon: IconTonConnect,
       title: "TON Connect",
+    },
+  },
+  {
+    path: "/me",
+    name: "me",
+    component: MePage,
+    meta: {
+      title: "Me page",
     },
   },
 ];
