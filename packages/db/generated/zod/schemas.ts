@@ -5,26 +5,6 @@
 
 import * as z from "zod";
 import type { Prisma } from "@prisma/client";
-// JSON helper schemas (hoisted)
-const jsonSchema = (() => {
-  const JsonValueSchema: any = (() => {
-    const recur: any = z.lazy(() =>
-      z.union([
-        z.string(),
-        z.number(),
-        z.boolean(),
-        z.literal(null),
-        z.record(
-          z.string(),
-          z.lazy(() => recur.optional()),
-        ),
-        z.array(z.lazy(() => recur)),
-      ]),
-    );
-    return recur;
-  })();
-  return JsonValueSchema;
-})();
 // File: TransactionIsolationLevel.schema.ts
 
 export const TransactionIsolationLevelSchema = z.enum([
@@ -62,7 +42,7 @@ export type UserScalarFieldEnum = z.infer<typeof UserScalarFieldEnumSchema>;
 export const PaymentScalarFieldEnumSchema = z.enum([
   "id",
   "payload",
-  "recipient",
+  "to",
   "currency",
   "amount",
   "jettonMaster",
@@ -80,12 +60,6 @@ export const SortOrderSchema = z.enum(["asc", "desc"]);
 
 export type SortOrder = z.infer<typeof SortOrderSchema>;
 
-// File: JsonNullValueInput.schema.ts
-
-export const JsonNullValueInputSchema = z.enum(["JsonNull"]);
-
-export type JsonNullValueInput = z.infer<typeof JsonNullValueInputSchema>;
-
 // File: QueryMode.schema.ts
 
 export const QueryModeSchema = z.enum(["default", "insensitive"]);
@@ -97,16 +71,6 @@ export type QueryMode = z.infer<typeof QueryModeSchema>;
 export const NullsOrderSchema = z.enum(["first", "last"]);
 
 export type NullsOrder = z.infer<typeof NullsOrderSchema>;
-
-// File: JsonNullValueFilter.schema.ts
-
-export const JsonNullValueFilterSchema = z.enum([
-  "DbNull",
-  "JsonNull",
-  "AnyNull",
-]);
-
-export type JsonNullValueFilter = z.infer<typeof JsonNullValueFilterSchema>;
 
 // File: Currency.schema.ts
 
@@ -404,8 +368,10 @@ const paymentwhereinputSchema = z
     id: z
       .union([z.lazy(() => StringFilterObjectSchema), z.string()])
       .optional(),
-    payload: z.lazy(() => JsonFilterObjectSchema).optional(),
-    recipient: z
+    payload: z
+      .union([z.lazy(() => StringFilterObjectSchema), z.string()])
+      .optional(),
+    to: z
       .union([z.lazy(() => StringFilterObjectSchema), z.string()])
       .optional(),
     currency: z
@@ -436,7 +402,7 @@ const __makeSchema_PaymentOrderByWithRelationInput_schema = () =>
     .object({
       id: SortOrderSchema.optional(),
       payload: SortOrderSchema.optional(),
-      recipient: SortOrderSchema.optional(),
+      to: SortOrderSchema.optional(),
       currency: SortOrderSchema.optional(),
       amount: SortOrderSchema.optional(),
       jettonMaster: z
@@ -469,7 +435,7 @@ const __makeSchema_PaymentOrderByWithAggregationInput_schema = () =>
     .object({
       id: SortOrderSchema.optional(),
       payload: SortOrderSchema.optional(),
-      recipient: SortOrderSchema.optional(),
+      to: SortOrderSchema.optional(),
       currency: SortOrderSchema.optional(),
       amount: SortOrderSchema.optional(),
       jettonMaster: z
@@ -516,8 +482,10 @@ const paymentscalarwherewithaggregatesinputSchema = z
     id: z
       .union([z.lazy(() => StringWithAggregatesFilterObjectSchema), z.string()])
       .optional(),
-    payload: z.lazy(() => JsonWithAggregatesFilterObjectSchema).optional(),
-    recipient: z
+    payload: z
+      .union([z.lazy(() => StringWithAggregatesFilterObjectSchema), z.string()])
+      .optional(),
+    to: z
       .union([z.lazy(() => StringWithAggregatesFilterObjectSchema), z.string()])
       .optional(),
     currency: z
@@ -991,8 +959,8 @@ const __makeSchema_PaymentCreateInput_schema = () =>
   z
     .object({
       id: z.string(),
-      payload: z.union([JsonNullValueInputSchema, jsonSchema]),
-      recipient: z.string(),
+      payload: z.string(),
+      to: z.string(),
       currency: CurrencySchema,
       amount: z.string(),
       jettonMaster: z.string().optional().nullable(),
@@ -1009,8 +977,8 @@ const __makeSchema_PaymentUncheckedCreateInput_schema = () =>
   z
     .object({
       id: z.string(),
-      payload: z.union([JsonNullValueInputSchema, jsonSchema]),
-      recipient: z.string(),
+      payload: z.string(),
+      to: z.string(),
       currency: CurrencySchema,
       amount: z.string(),
       jettonMaster: z.string().optional().nullable(),
@@ -1032,8 +1000,13 @@ const __makeSchema_PaymentUpdateInput_schema = () =>
           z.lazy(() => StringFieldUpdateOperationsInputObjectSchema),
         ])
         .optional(),
-      payload: z.union([JsonNullValueInputSchema, jsonSchema]).optional(),
-      recipient: z
+      payload: z
+        .union([
+          z.string(),
+          z.lazy(() => StringFieldUpdateOperationsInputObjectSchema),
+        ])
+        .optional(),
+      to: z
         .union([
           z.string(),
           z.lazy(() => StringFieldUpdateOperationsInputObjectSchema),
@@ -1087,8 +1060,13 @@ const __makeSchema_PaymentUncheckedUpdateInput_schema = () =>
           z.lazy(() => StringFieldUpdateOperationsInputObjectSchema),
         ])
         .optional(),
-      payload: z.union([JsonNullValueInputSchema, jsonSchema]).optional(),
-      recipient: z
+      payload: z
+        .union([
+          z.string(),
+          z.lazy(() => StringFieldUpdateOperationsInputObjectSchema),
+        ])
+        .optional(),
+      to: z
         .union([
           z.string(),
           z.lazy(() => StringFieldUpdateOperationsInputObjectSchema),
@@ -1137,8 +1115,8 @@ const __makeSchema_PaymentCreateManyInput_schema = () =>
   z
     .object({
       id: z.string(),
-      payload: z.union([JsonNullValueInputSchema, jsonSchema]),
-      recipient: z.string(),
+      payload: z.string(),
+      to: z.string(),
       currency: CurrencySchema,
       amount: z.string(),
       jettonMaster: z.string().optional().nullable(),
@@ -1161,8 +1139,13 @@ const __makeSchema_PaymentUpdateManyMutationInput_schema = () =>
           z.lazy(() => StringFieldUpdateOperationsInputObjectSchema),
         ])
         .optional(),
-      payload: z.union([JsonNullValueInputSchema, jsonSchema]).optional(),
-      recipient: z
+      payload: z
+        .union([
+          z.string(),
+          z.lazy(() => StringFieldUpdateOperationsInputObjectSchema),
+        ])
+        .optional(),
+      to: z
         .union([
           z.string(),
           z.lazy(() => StringFieldUpdateOperationsInputObjectSchema),
@@ -1216,8 +1199,13 @@ const __makeSchema_PaymentUncheckedUpdateManyInput_schema = () =>
           z.lazy(() => StringFieldUpdateOperationsInputObjectSchema),
         ])
         .optional(),
-      payload: z.union([JsonNullValueInputSchema, jsonSchema]).optional(),
-      recipient: z
+      payload: z
+        .union([
+          z.string(),
+          z.lazy(() => StringFieldUpdateOperationsInputObjectSchema),
+        ])
+        .optional(),
+      to: z
         .union([
           z.string(),
           z.lazy(() => StringFieldUpdateOperationsInputObjectSchema),
@@ -1552,30 +1540,6 @@ export const DateTimeWithAggregatesFilterObjectSchema: z.ZodType<Prisma.DateTime
 export const DateTimeWithAggregatesFilterObjectZodSchema =
   __makeSchema_DateTimeWithAggregatesFilter_schema();
 
-// File: JsonFilter.schema.ts
-const __makeSchema_JsonFilter_schema = () =>
-  z
-    .object({
-      equals: jsonSchema.optional(),
-      path: z.string().array().optional(),
-      mode: QueryModeSchema.optional(),
-      string_contains: z.string().optional(),
-      string_starts_with: z.string().optional(),
-      string_ends_with: z.string().optional(),
-      array_starts_with: jsonSchema.optional().nullable(),
-      array_ends_with: jsonSchema.optional().nullable(),
-      array_contains: jsonSchema.optional().nullable(),
-      lt: jsonSchema.optional(),
-      lte: jsonSchema.optional(),
-      gt: jsonSchema.optional(),
-      gte: jsonSchema.optional(),
-      not: jsonSchema.optional(),
-    })
-    .strict();
-export const JsonFilterObjectSchema: z.ZodType<Prisma.JsonFilter> =
-  __makeSchema_JsonFilter_schema() as unknown as z.ZodType<Prisma.JsonFilter>;
-export const JsonFilterObjectZodSchema = __makeSchema_JsonFilter_schema();
-
 // File: EnumCurrencyFilter.schema.ts
 const __makeSchema_EnumCurrencyFilter_schema = () =>
   z
@@ -1602,7 +1566,7 @@ const __makeSchema_PaymentCountOrderByAggregateInput_schema = () =>
     .object({
       id: SortOrderSchema.optional(),
       payload: SortOrderSchema.optional(),
-      recipient: SortOrderSchema.optional(),
+      to: SortOrderSchema.optional(),
       currency: SortOrderSchema.optional(),
       amount: SortOrderSchema.optional(),
       jettonMaster: SortOrderSchema.optional(),
@@ -1620,7 +1584,8 @@ const __makeSchema_PaymentMaxOrderByAggregateInput_schema = () =>
   z
     .object({
       id: SortOrderSchema.optional(),
-      recipient: SortOrderSchema.optional(),
+      payload: SortOrderSchema.optional(),
+      to: SortOrderSchema.optional(),
       currency: SortOrderSchema.optional(),
       amount: SortOrderSchema.optional(),
       jettonMaster: SortOrderSchema.optional(),
@@ -1638,7 +1603,8 @@ const __makeSchema_PaymentMinOrderByAggregateInput_schema = () =>
   z
     .object({
       id: SortOrderSchema.optional(),
-      recipient: SortOrderSchema.optional(),
+      payload: SortOrderSchema.optional(),
+      to: SortOrderSchema.optional(),
       currency: SortOrderSchema.optional(),
       amount: SortOrderSchema.optional(),
       jettonMaster: SortOrderSchema.optional(),
@@ -1650,34 +1616,6 @@ export const PaymentMinOrderByAggregateInputObjectSchema: z.ZodType<Prisma.Payme
   __makeSchema_PaymentMinOrderByAggregateInput_schema() as unknown as z.ZodType<Prisma.PaymentMinOrderByAggregateInput>;
 export const PaymentMinOrderByAggregateInputObjectZodSchema =
   __makeSchema_PaymentMinOrderByAggregateInput_schema();
-
-// File: JsonWithAggregatesFilter.schema.ts
-const __makeSchema_JsonWithAggregatesFilter_schema = () =>
-  z
-    .object({
-      equals: jsonSchema.optional(),
-      path: z.string().array().optional(),
-      mode: QueryModeSchema.optional(),
-      string_contains: z.string().optional(),
-      string_starts_with: z.string().optional(),
-      string_ends_with: z.string().optional(),
-      array_starts_with: jsonSchema.optional().nullable(),
-      array_ends_with: jsonSchema.optional().nullable(),
-      array_contains: jsonSchema.optional().nullable(),
-      lt: jsonSchema.optional(),
-      lte: jsonSchema.optional(),
-      gt: jsonSchema.optional(),
-      gte: jsonSchema.optional(),
-      not: jsonSchema.optional(),
-      _count: z.lazy(() => NestedIntFilterObjectSchema).optional(),
-      _min: z.lazy(() => NestedJsonFilterObjectSchema).optional(),
-      _max: z.lazy(() => NestedJsonFilterObjectSchema).optional(),
-    })
-    .strict();
-export const JsonWithAggregatesFilterObjectSchema: z.ZodType<Prisma.JsonWithAggregatesFilter> =
-  __makeSchema_JsonWithAggregatesFilter_schema() as unknown as z.ZodType<Prisma.JsonWithAggregatesFilter>;
-export const JsonWithAggregatesFilterObjectZodSchema =
-  __makeSchema_JsonWithAggregatesFilter_schema();
 
 // File: EnumCurrencyWithAggregatesFilter.schema.ts
 const __makeSchema_EnumCurrencyWithAggregatesFilter_schema = () =>
@@ -2025,31 +1963,6 @@ export const NestedEnumCurrencyFilterObjectSchema: z.ZodType<Prisma.NestedEnumCu
 export const NestedEnumCurrencyFilterObjectZodSchema =
   nestedenumcurrencyfilterSchema;
 
-// File: NestedJsonFilter.schema.ts
-const __makeSchema_NestedJsonFilter_schema = () =>
-  z
-    .object({
-      equals: jsonSchema.optional(),
-      path: z.string().array().optional(),
-      mode: QueryModeSchema.optional(),
-      string_contains: z.string().optional(),
-      string_starts_with: z.string().optional(),
-      string_ends_with: z.string().optional(),
-      array_starts_with: jsonSchema.optional().nullable(),
-      array_ends_with: jsonSchema.optional().nullable(),
-      array_contains: jsonSchema.optional().nullable(),
-      lt: jsonSchema.optional(),
-      lte: jsonSchema.optional(),
-      gt: jsonSchema.optional(),
-      gte: jsonSchema.optional(),
-      not: jsonSchema.optional(),
-    })
-    .strict();
-export const NestedJsonFilterObjectSchema: z.ZodType<Prisma.NestedJsonFilter> =
-  __makeSchema_NestedJsonFilter_schema() as unknown as z.ZodType<Prisma.NestedJsonFilter>;
-export const NestedJsonFilterObjectZodSchema =
-  __makeSchema_NestedJsonFilter_schema();
-
 // File: NestedEnumCurrencyWithAggregatesFilter.schema.ts
 
 const nestedenumcurrencywithaggregatesfilterSchema = z
@@ -2149,7 +2062,7 @@ const __makeSchema_PaymentCountAggregateInput_schema = () =>
     .object({
       id: z.literal(true).optional(),
       payload: z.literal(true).optional(),
-      recipient: z.literal(true).optional(),
+      to: z.literal(true).optional(),
       currency: z.literal(true).optional(),
       amount: z.literal(true).optional(),
       jettonMaster: z.literal(true).optional(),
@@ -2168,7 +2081,8 @@ const __makeSchema_PaymentMinAggregateInput_schema = () =>
   z
     .object({
       id: z.literal(true).optional(),
-      recipient: z.literal(true).optional(),
+      payload: z.literal(true).optional(),
+      to: z.literal(true).optional(),
       currency: z.literal(true).optional(),
       amount: z.literal(true).optional(),
       jettonMaster: z.literal(true).optional(),
@@ -2186,7 +2100,8 @@ const __makeSchema_PaymentMaxAggregateInput_schema = () =>
   z
     .object({
       id: z.literal(true).optional(),
-      recipient: z.literal(true).optional(),
+      payload: z.literal(true).optional(),
+      to: z.literal(true).optional(),
       currency: z.literal(true).optional(),
       amount: z.literal(true).optional(),
       jettonMaster: z.literal(true).optional(),
@@ -2227,7 +2142,7 @@ const __makeSchema_PaymentSelect_schema = () =>
     .object({
       id: z.boolean().optional(),
       payload: z.boolean().optional(),
-      recipient: z.boolean().optional(),
+      to: z.boolean().optional(),
       currency: z.boolean().optional(),
       amount: z.boolean().optional(),
       jettonMaster: z.boolean().optional(),
@@ -2884,7 +2799,7 @@ export const PaymentFindFirstSelectSchema__findFirstPayment_schema: z.ZodType<Pr
     .object({
       id: z.boolean().optional(),
       payload: z.boolean().optional(),
-      recipient: z.boolean().optional(),
+      to: z.boolean().optional(),
       currency: z.boolean().optional(),
       amount: z.boolean().optional(),
       jettonMaster: z.boolean().optional(),
@@ -2897,7 +2812,7 @@ export const PaymentFindFirstSelectZodSchema__findFirstPayment_schema = z
   .object({
     id: z.boolean().optional(),
     payload: z.boolean().optional(),
-    recipient: z.boolean().optional(),
+    to: z.boolean().optional(),
     currency: z.boolean().optional(),
     amount: z.boolean().optional(),
     jettonMaster: z.boolean().optional(),
@@ -2960,7 +2875,7 @@ export const PaymentFindFirstOrThrowSelectSchema__findFirstOrThrowPayment_schema
     .object({
       id: z.boolean().optional(),
       payload: z.boolean().optional(),
-      recipient: z.boolean().optional(),
+      to: z.boolean().optional(),
       currency: z.boolean().optional(),
       amount: z.boolean().optional(),
       jettonMaster: z.boolean().optional(),
@@ -2974,7 +2889,7 @@ export const PaymentFindFirstOrThrowSelectZodSchema__findFirstOrThrowPayment_sch
     .object({
       id: z.boolean().optional(),
       payload: z.boolean().optional(),
-      recipient: z.boolean().optional(),
+      to: z.boolean().optional(),
       currency: z.boolean().optional(),
       amount: z.boolean().optional(),
       jettonMaster: z.boolean().optional(),
@@ -3040,7 +2955,7 @@ export const PaymentFindManySelectSchema__findManyPayment_schema: z.ZodType<Pris
     .object({
       id: z.boolean().optional(),
       payload: z.boolean().optional(),
-      recipient: z.boolean().optional(),
+      to: z.boolean().optional(),
       currency: z.boolean().optional(),
       amount: z.boolean().optional(),
       jettonMaster: z.boolean().optional(),
@@ -3053,7 +2968,7 @@ export const PaymentFindManySelectZodSchema__findManyPayment_schema = z
   .object({
     id: z.boolean().optional(),
     payload: z.boolean().optional(),
-    recipient: z.boolean().optional(),
+    to: z.boolean().optional(),
     currency: z.boolean().optional(),
     amount: z.boolean().optional(),
     jettonMaster: z.boolean().optional(),
@@ -3683,8 +3598,8 @@ export const UserCountResultSchema = z.number();
 export const PaymentFindUniqueResultSchema = z.nullable(
   z.object({
     id: z.string(),
-    payload: z.unknown(),
-    recipient: z.string(),
+    payload: z.string(),
+    to: z.string(),
     currency: z.unknown(),
     amount: z.string(),
     jettonMaster: z.string().optional(),
@@ -3697,8 +3612,8 @@ export const PaymentFindUniqueResultSchema = z.nullable(
 export const PaymentFindFirstResultSchema = z.nullable(
   z.object({
     id: z.string(),
-    payload: z.unknown(),
-    recipient: z.string(),
+    payload: z.string(),
+    to: z.string(),
     currency: z.unknown(),
     amount: z.string(),
     jettonMaster: z.string().optional(),
@@ -3712,8 +3627,8 @@ export const PaymentFindManyResultSchema = z.object({
   data: z.array(
     z.object({
       id: z.string(),
-      payload: z.unknown(),
-      recipient: z.string(),
+      payload: z.string(),
+      to: z.string(),
       currency: z.unknown(),
       amount: z.string(),
       jettonMaster: z.string().optional(),
@@ -3734,8 +3649,8 @@ export const PaymentFindManyResultSchema = z.object({
 // File: PaymentCreateResult.schema.ts
 export const PaymentCreateResultSchema = z.object({
   id: z.string(),
-  payload: z.unknown(),
-  recipient: z.string(),
+  payload: z.string(),
+  to: z.string(),
   currency: z.unknown(),
   amount: z.string(),
   jettonMaster: z.string().optional(),
@@ -3752,8 +3667,8 @@ export const PaymentCreateManyResultSchema = z.object({
 export const PaymentUpdateResultSchema = z.nullable(
   z.object({
     id: z.string(),
-    payload: z.unknown(),
-    recipient: z.string(),
+    payload: z.string(),
+    to: z.string(),
     currency: z.unknown(),
     amount: z.string(),
     jettonMaster: z.string().optional(),
@@ -3770,8 +3685,8 @@ export const PaymentUpdateManyResultSchema = z.object({
 // File: PaymentUpsertResult.schema.ts
 export const PaymentUpsertResultSchema = z.object({
   id: z.string(),
-  payload: z.unknown(),
-  recipient: z.string(),
+  payload: z.string(),
+  to: z.string(),
   currency: z.unknown(),
   amount: z.string(),
   jettonMaster: z.string().optional(),
@@ -3783,8 +3698,8 @@ export const PaymentUpsertResultSchema = z.object({
 export const PaymentDeleteResultSchema = z.nullable(
   z.object({
     id: z.string(),
-    payload: z.unknown(),
-    recipient: z.string(),
+    payload: z.string(),
+    to: z.string(),
     currency: z.unknown(),
     amount: z.string(),
     jettonMaster: z.string().optional(),
@@ -3804,7 +3719,7 @@ export const PaymentAggregateResultSchema = z.object({
     .object({
       id: z.number(),
       payload: z.number(),
-      recipient: z.number(),
+      to: z.number(),
       currency: z.number(),
       amount: z.number(),
       jettonMaster: z.number(),
@@ -3815,7 +3730,8 @@ export const PaymentAggregateResultSchema = z.object({
   _min: z
     .object({
       id: z.string().nullable(),
-      recipient: z.string().nullable(),
+      payload: z.string().nullable(),
+      to: z.string().nullable(),
       amount: z.string().nullable(),
       jettonMaster: z.string().nullable(),
       createdAt: z.date().nullable(),
@@ -3826,7 +3742,8 @@ export const PaymentAggregateResultSchema = z.object({
   _max: z
     .object({
       id: z.string().nullable(),
-      recipient: z.string().nullable(),
+      payload: z.string().nullable(),
+      to: z.string().nullable(),
       amount: z.string().nullable(),
       jettonMaster: z.string().nullable(),
       createdAt: z.date().nullable(),
@@ -3840,8 +3757,8 @@ export const PaymentAggregateResultSchema = z.object({
 export const PaymentGroupByResultSchema = z.array(
   z.object({
     id: z.string(),
-    payload: z.unknown(),
-    recipient: z.string(),
+    payload: z.string(),
+    to: z.string(),
     amount: z.string(),
     jettonMaster: z.string(),
     createdAt: z.date(),
@@ -3850,7 +3767,7 @@ export const PaymentGroupByResultSchema = z.array(
       .object({
         id: z.number(),
         payload: z.number(),
-        recipient: z.number(),
+        to: z.number(),
         currency: z.number(),
         amount: z.number(),
         jettonMaster: z.number(),
@@ -3861,7 +3778,8 @@ export const PaymentGroupByResultSchema = z.array(
     _min: z
       .object({
         id: z.string().nullable(),
-        recipient: z.string().nullable(),
+        payload: z.string().nullable(),
+        to: z.string().nullable(),
         amount: z.string().nullable(),
         jettonMaster: z.string().nullable(),
         createdAt: z.date().nullable(),
@@ -3872,7 +3790,8 @@ export const PaymentGroupByResultSchema = z.array(
     _max: z
       .object({
         id: z.string().nullable(),
-        recipient: z.string().nullable(),
+        payload: z.string().nullable(),
+        to: z.string().nullable(),
         amount: z.string().nullable(),
         jettonMaster: z.string().nullable(),
         createdAt: z.date().nullable(),
@@ -3913,17 +3832,8 @@ export type UserType = z.infer<typeof UserSchema>;
 
 export const PaymentSchema = z.object({
   id: z.string(),
-  payload: z.unknown().refine((val) => {
-    const getDepth = (obj: unknown, depth: number = 0): number => {
-      if (depth > 10) return depth;
-      if (obj === null || typeof obj !== "object") return depth;
-      const values = Object.values(obj as Record<string, unknown>);
-      if (values.length === 0) return depth;
-      return Math.max(...values.map((v) => getDepth(v, depth + 1)));
-    };
-    return getDepth(val) <= 10;
-  }, "JSON nesting depth exceeds maximum of 10"),
-  recipient: z.string(),
+  payload: z.string(),
+  to: z.string(),
   currency: CurrencySchema,
   amount: z.string(),
   jettonMaster: z.string().nullish(),

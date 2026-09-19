@@ -5,28 +5,40 @@
  * Swagger api description
  * OpenAPI spec version: 1.0
  */
-import { useMutation } from "@tanstack/vue-query";
+import { useMutation, useQuery } from "@tanstack/vue-query";
 import type {
+  DataTag,
   MutationFunction,
   QueryClient,
+  QueryFunction,
+  QueryKey,
   UseMutationOptions,
   UseMutationReturnType,
+  UseQueryOptions,
+  UseQueryReturnType,
 } from "@tanstack/vue-query";
+
+import { unref } from "vue";
 
 import { customFetch } from "../fetcher";
 export type UserFindUniqueReqDtoSelect = {
   id?: boolean;
-  email?: boolean;
-  name?: boolean;
+  first_name?: boolean;
+  last_name?: boolean;
+  username?: boolean;
+  language_code?: boolean;
+  is_premium?: boolean;
+  added_to_attachment_menu?: boolean;
+  allows_write_to_pm?: boolean;
+  photo_url?: boolean;
+  created_at?: boolean;
+  updated_at?: boolean;
+  ton_wallet_address?: boolean;
 };
 
 export type UserFindUniqueReqDtoWhere = {
-  /**
-   * @minimum -9007199254740991
-   * @maximum 9007199254740991
-   */
-  id?: number;
-  email?: string;
+  id?: string;
+  ton_wallet_address?: string;
 };
 
 export interface UserFindUniqueReqDto {
@@ -35,13 +47,69 @@ export interface UserFindUniqueReqDto {
 }
 
 export interface UserFindUniqueResDtoOutput {
-  email?: string;
-  /**
-   * @minimum -9007199254740991
-   * @maximum 9007199254740991
-   */
-  id?: number;
-  name?: string;
+  id?: string;
+  first_name?: string;
+  /** @nullable */
+  last_name?: string | null;
+  /** @nullable */
+  photo_url?: string | null;
+  /** @nullable */
+  username?: string | null;
+  /** @nullable */
+  ton_wallet_address?: string | null;
+  /** @nullable */
+  is_premium?: boolean | null;
+}
+
+export interface UserMeResDtoOutput {
+  id?: string;
+  first_name?: string;
+  /** @nullable */
+  last_name?: string | null;
+  /** @nullable */
+  photo_url?: string | null;
+  /** @nullable */
+  username?: string | null;
+  /** @nullable */
+  ton_wallet_address?: string | null;
+  /** @nullable */
+  is_premium?: boolean | null;
+}
+
+export interface UserUpdateTonAccountAddressDto {
+  /** @nullable */
+  ton_wallet_address?: string | null;
+}
+
+export type PaymentCreateReqDtoCurrency =
+  (typeof PaymentCreateReqDtoCurrency)[keyof typeof PaymentCreateReqDtoCurrency];
+
+export const PaymentCreateReqDtoCurrency = {
+  TON: "TON",
+  USDT: "USDT",
+} as const;
+
+export interface PaymentCreateReqDto {
+  amount: string;
+  currency: PaymentCreateReqDtoCurrency;
+}
+
+export type PaymentCreateResDtoOutputCurrency =
+  (typeof PaymentCreateResDtoOutputCurrency)[keyof typeof PaymentCreateResDtoOutputCurrency];
+
+export const PaymentCreateResDtoOutputCurrency = {
+  TON: "TON",
+  USDT: "USDT",
+} as const;
+
+export interface PaymentCreateResDtoOutput {
+  id: string;
+  payload: string;
+  to: string;
+  currency: PaymentCreateResDtoOutputCurrency;
+  amount: string;
+  /** @nullable */
+  jettonMaster?: string | null;
 }
 
 type AwaitedInput<T> = PromiseLike<T> | T;
@@ -148,6 +216,310 @@ export const useUserControllerFindUnique = <
 > => {
   return useMutation(
     getUserControllerFindUniqueMutationOptions(options),
+    queryClient,
+  );
+};
+
+export type userControllerFindMeResponseDefault = {
+  data: UserMeResDtoOutput;
+  status: number;
+};
+
+export type userControllerFindMeResponseError =
+  userControllerFindMeResponseDefault & {
+    headers: Headers;
+  };
+
+export type userControllerFindMeResponse = userControllerFindMeResponseError;
+
+export const getUserControllerFindMeUrl = () => {
+  return `/user/me`;
+};
+
+export const userControllerFindMe = async (
+  options?: RequestInit,
+): Promise<userControllerFindMeResponse> => {
+  return customFetch<userControllerFindMeResponse>(
+    getUserControllerFindMeUrl(),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getUserControllerFindMeQueryKey = () => {
+  return ["user", "me"] as const;
+};
+
+export const getUserControllerFindMeQueryOptions = <
+  TData = Awaited<ReturnType<typeof userControllerFindMe>>,
+  TError = UserMeResDtoOutput,
+>(options?: {
+  query?: Partial<
+    UseQueryOptions<
+      Awaited<ReturnType<typeof userControllerFindMe>>,
+      TError,
+      TData
+    >
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = getUserControllerFindMeQueryKey();
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof userControllerFindMe>>
+  > = ({ signal }) => userControllerFindMe({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof userControllerFindMe>>,
+    TError,
+    TData
+  >;
+};
+
+export type UserControllerFindMeQueryResult = NonNullable<
+  Awaited<ReturnType<typeof userControllerFindMe>>
+>;
+export type UserControllerFindMeQueryError = UserMeResDtoOutput;
+
+export function useUserControllerFindMe<
+  TData = Awaited<ReturnType<typeof userControllerFindMe>>,
+  TError = UserMeResDtoOutput,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof userControllerFindMe>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryReturnType<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getUserControllerFindMeQueryOptions(options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryReturnType<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = unref(queryOptions).queryKey as DataTag<
+    QueryKey,
+    TData,
+    TError
+  >;
+
+  return query;
+}
+
+export type userControllerUpdateTonAccountAddressResponse201 = {
+  data: void;
+  status: 201;
+};
+
+export type userControllerUpdateTonAccountAddressResponseSuccess =
+  userControllerUpdateTonAccountAddressResponse201 & {
+    headers: Headers;
+  };
+export type userControllerUpdateTonAccountAddressResponse =
+  userControllerUpdateTonAccountAddressResponseSuccess;
+
+export const getUserControllerUpdateTonAccountAddressUrl = () => {
+  return `/user/update-ton-account-address`;
+};
+
+export const userControllerUpdateTonAccountAddress = async (
+  userUpdateTonAccountAddressDto: UserUpdateTonAccountAddressDto,
+  options?: RequestInit,
+): Promise<userControllerUpdateTonAccountAddressResponse> => {
+  return customFetch<userControllerUpdateTonAccountAddressResponse>(
+    getUserControllerUpdateTonAccountAddressUrl(),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(userUpdateTonAccountAddressDto),
+    },
+  );
+};
+
+export const getUserControllerUpdateTonAccountAddressMutationOptions = <
+  TError = unknown,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof userControllerUpdateTonAccountAddress>>,
+    TError,
+    { data: UserUpdateTonAccountAddressDto },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof userControllerUpdateTonAccountAddress>>,
+  TError,
+  { data: UserUpdateTonAccountAddressDto },
+  TContext
+> => {
+  const mutationKey = ["userControllerUpdateTonAccountAddress"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof userControllerUpdateTonAccountAddress>>,
+    { data: UserUpdateTonAccountAddressDto }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return userControllerUpdateTonAccountAddress(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UserControllerUpdateTonAccountAddressMutationResult = NonNullable<
+  Awaited<ReturnType<typeof userControllerUpdateTonAccountAddress>>
+>;
+export type UserControllerUpdateTonAccountAddressMutationBody =
+  UserUpdateTonAccountAddressDto;
+export type UserControllerUpdateTonAccountAddressMutationError = unknown;
+
+export const useUserControllerUpdateTonAccountAddress = <
+  TError = unknown,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof userControllerUpdateTonAccountAddress>>,
+      TError,
+      { data: UserUpdateTonAccountAddressDto },
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationReturnType<
+  Awaited<ReturnType<typeof userControllerUpdateTonAccountAddress>>,
+  TError,
+  { data: UserUpdateTonAccountAddressDto },
+  TContext
+> => {
+  return useMutation(
+    getUserControllerUpdateTonAccountAddressMutationOptions(options),
+    queryClient,
+  );
+};
+
+export type paymentsControllerCreatePaymentsResponseDefault = {
+  data: PaymentCreateResDtoOutput;
+  status: number;
+};
+
+export type paymentsControllerCreatePaymentsResponseError =
+  paymentsControllerCreatePaymentsResponseDefault & {
+    headers: Headers;
+  };
+
+export type paymentsControllerCreatePaymentsResponse =
+  paymentsControllerCreatePaymentsResponseError;
+
+export const getPaymentsControllerCreatePaymentsUrl = () => {
+  return `/payments/create`;
+};
+
+export const paymentsControllerCreatePayments = async (
+  paymentCreateReqDto: PaymentCreateReqDto,
+  options?: RequestInit,
+): Promise<paymentsControllerCreatePaymentsResponse> => {
+  return customFetch<paymentsControllerCreatePaymentsResponse>(
+    getPaymentsControllerCreatePaymentsUrl(),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(paymentCreateReqDto),
+    },
+  );
+};
+
+export const getPaymentsControllerCreatePaymentsMutationOptions = <
+  TError = PaymentCreateResDtoOutput,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof paymentsControllerCreatePayments>>,
+    TError,
+    { data: PaymentCreateReqDto },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof paymentsControllerCreatePayments>>,
+  TError,
+  { data: PaymentCreateReqDto },
+  TContext
+> => {
+  const mutationKey = ["paymentsControllerCreatePayments"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof paymentsControllerCreatePayments>>,
+    { data: PaymentCreateReqDto }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return paymentsControllerCreatePayments(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type PaymentsControllerCreatePaymentsMutationResult = NonNullable<
+  Awaited<ReturnType<typeof paymentsControllerCreatePayments>>
+>;
+export type PaymentsControllerCreatePaymentsMutationBody = PaymentCreateReqDto;
+export type PaymentsControllerCreatePaymentsMutationError =
+  PaymentCreateResDtoOutput;
+
+export const usePaymentsControllerCreatePayments = <
+  TError = PaymentCreateResDtoOutput,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof paymentsControllerCreatePayments>>,
+      TError,
+      { data: PaymentCreateReqDto },
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationReturnType<
+  Awaited<ReturnType<typeof paymentsControllerCreatePayments>>,
+  TError,
+  { data: PaymentCreateReqDto },
+  TContext
+> => {
+  return useMutation(
+    getPaymentsControllerCreatePaymentsMutationOptions(options),
     queryClient,
   );
 };

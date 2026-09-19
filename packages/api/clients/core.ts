@@ -8,17 +8,22 @@
 import { customFetch } from "../fetcher";
 export type UserFindUniqueReqDtoSelect = {
   id?: boolean;
-  email?: boolean;
-  name?: boolean;
+  first_name?: boolean;
+  last_name?: boolean;
+  username?: boolean;
+  language_code?: boolean;
+  is_premium?: boolean;
+  added_to_attachment_menu?: boolean;
+  allows_write_to_pm?: boolean;
+  photo_url?: boolean;
+  created_at?: boolean;
+  updated_at?: boolean;
+  ton_wallet_address?: boolean;
 };
 
 export type UserFindUniqueReqDtoWhere = {
-  /**
-   * @minimum -9007199254740991
-   * @maximum 9007199254740991
-   */
-  id?: number;
-  email?: string;
+  id?: string;
+  ton_wallet_address?: string;
 };
 
 export interface UserFindUniqueReqDto {
@@ -27,13 +32,69 @@ export interface UserFindUniqueReqDto {
 }
 
 export interface UserFindUniqueResDtoOutput {
-  email?: string;
-  /**
-   * @minimum -9007199254740991
-   * @maximum 9007199254740991
-   */
-  id?: number;
-  name?: string;
+  id?: string;
+  first_name?: string;
+  /** @nullable */
+  last_name?: string | null;
+  /** @nullable */
+  photo_url?: string | null;
+  /** @nullable */
+  username?: string | null;
+  /** @nullable */
+  ton_wallet_address?: string | null;
+  /** @nullable */
+  is_premium?: boolean | null;
+}
+
+export interface UserMeResDtoOutput {
+  id?: string;
+  first_name?: string;
+  /** @nullable */
+  last_name?: string | null;
+  /** @nullable */
+  photo_url?: string | null;
+  /** @nullable */
+  username?: string | null;
+  /** @nullable */
+  ton_wallet_address?: string | null;
+  /** @nullable */
+  is_premium?: boolean | null;
+}
+
+export interface UserUpdateTonAccountAddressDto {
+  /** @nullable */
+  ton_wallet_address?: string | null;
+}
+
+export type PaymentCreateReqDtoCurrency =
+  (typeof PaymentCreateReqDtoCurrency)[keyof typeof PaymentCreateReqDtoCurrency];
+
+export const PaymentCreateReqDtoCurrency = {
+  TON: "TON",
+  USDT: "USDT",
+} as const;
+
+export interface PaymentCreateReqDto {
+  amount: string;
+  currency: PaymentCreateReqDtoCurrency;
+}
+
+export type PaymentCreateResDtoOutputCurrency =
+  (typeof PaymentCreateResDtoOutputCurrency)[keyof typeof PaymentCreateResDtoOutputCurrency];
+
+export const PaymentCreateResDtoOutputCurrency = {
+  TON: "TON",
+  USDT: "USDT",
+} as const;
+
+export interface PaymentCreateResDtoOutput {
+  id: string;
+  payload: string;
+  to: string;
+  currency: PaymentCreateResDtoOutputCurrency;
+  amount: string;
+  /** @nullable */
+  jettonMaster?: string | null;
 }
 
 export type userControllerFindUniqueResponseDefault = {
@@ -64,6 +125,97 @@ export const userControllerFindUnique = async (
       method: "POST",
       headers: { "Content-Type": "application/json", ...options?.headers },
       body: JSON.stringify(userFindUniqueReqDto),
+    },
+  );
+};
+
+export type userControllerFindMeResponseDefault = {
+  data: UserMeResDtoOutput;
+  status: number;
+};
+
+export type userControllerFindMeResponseError =
+  userControllerFindMeResponseDefault & {
+    headers: Headers;
+  };
+
+export type userControllerFindMeResponse = userControllerFindMeResponseError;
+
+export const getUserControllerFindMeUrl = () => {
+  return `/user/me`;
+};
+
+export const userControllerFindMe = async (
+  options?: RequestInit,
+): Promise<userControllerFindMeResponse> => {
+  return customFetch<userControllerFindMeResponse>(
+    getUserControllerFindMeUrl(),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export type userControllerUpdateTonAccountAddressResponse201 = {
+  data: void;
+  status: 201;
+};
+
+export type userControllerUpdateTonAccountAddressResponseSuccess =
+  userControllerUpdateTonAccountAddressResponse201 & {
+    headers: Headers;
+  };
+export type userControllerUpdateTonAccountAddressResponse =
+  userControllerUpdateTonAccountAddressResponseSuccess;
+
+export const getUserControllerUpdateTonAccountAddressUrl = () => {
+  return `/user/update-ton-account-address`;
+};
+
+export const userControllerUpdateTonAccountAddress = async (
+  userUpdateTonAccountAddressDto: UserUpdateTonAccountAddressDto,
+  options?: RequestInit,
+): Promise<userControllerUpdateTonAccountAddressResponse> => {
+  return customFetch<userControllerUpdateTonAccountAddressResponse>(
+    getUserControllerUpdateTonAccountAddressUrl(),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(userUpdateTonAccountAddressDto),
+    },
+  );
+};
+
+export type paymentsControllerCreatePaymentsResponseDefault = {
+  data: PaymentCreateResDtoOutput;
+  status: number;
+};
+
+export type paymentsControllerCreatePaymentsResponseError =
+  paymentsControllerCreatePaymentsResponseDefault & {
+    headers: Headers;
+  };
+
+export type paymentsControllerCreatePaymentsResponse =
+  paymentsControllerCreatePaymentsResponseError;
+
+export const getPaymentsControllerCreatePaymentsUrl = () => {
+  return `/payments/create`;
+};
+
+export const paymentsControllerCreatePayments = async (
+  paymentCreateReqDto: PaymentCreateReqDto,
+  options?: RequestInit,
+): Promise<paymentsControllerCreatePaymentsResponse> => {
+  return customFetch<paymentsControllerCreatePaymentsResponse>(
+    getPaymentsControllerCreatePaymentsUrl(),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(paymentCreateReqDto),
     },
   );
 };

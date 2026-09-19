@@ -4,8 +4,57 @@ import { TonConnectButton, useTonWallet } from '@/tonconnect';
 import AppDisplayData, { type DisplayDataRow } from '@/components/AppDisplayData.vue';
 import AppLink from '@/components/AppLink.vue';
 import AppPage from '@/components/AppPage.vue';
+import { usePaymentsControllerCreatePayments } from '@pkg/api/client/vue';
+import { useTonConnectUI } from '@/tonconnect/useTonConnectUI';
+
+const q = usePaymentsControllerCreatePayments()
+
+const { tonConnectUI } = useTonConnectUI()
 
 const { wallet } = useTonWallet();
+
+const payTon = async () => {
+  const { data: payment } = await q.mutateAsync({
+    data: {
+      currency: 'TON',
+      amount: '1000000',
+    },
+  })
+
+  await tonConnectUI.sendTransaction({
+    validUntil: Math.floor(Date.now() / 1000) + 300,
+    messages: [
+      {
+        address: payment.to,
+        amount: payment.amount,
+        payload: payment.payload,
+      },
+    ],
+  });
+
+  console.log('payment', payment)
+}
+
+const payJetton = async () => {
+  const { data: payment } = await q.mutateAsync({
+    data: {
+      currency: 'USDT',
+      amount: '1000000',
+    },
+  })
+
+  await tonConnectUI.sendTransaction({
+    validUntil: Math.floor(Date.now() / 1000) + 300,
+    messages: [
+      {
+        address: payment.to,
+        amount: payment.amount,
+        payload: payment.payload,
+      },
+    ],
+  });
+  console.log('payment', payment)
+}
 
 const walletExtended = computed(() => {
   return wallet.value && 'imageUrl' in wallet.value ? wallet.value : null;
@@ -25,14 +74,14 @@ const rows = computed<DisplayDataRow[]>(() => {
     <p v-if="!wallet">To display the data related to the TON Connect, it is required to connect your wallet.</p>
     <template v-else>
       <div v-if="walletExtended" class="ton-connect-page__provider">
-        <img class="ton-connect-page__provider-image" :src="walletExtended.imageUrl" alt="Provider logo"
-             width="60" height="60" />
+        <img class="ton-connect-page__provider-image" :src="walletExtended.imageUrl" alt="Provider logo" width="60"
+          height="60" />
         <div class="ton-connect-page__provider-meta">
           <p class="ton-connect-page__provider-wallet-name">
             {{ walletExtended.name }}&nbsp;
             <span class="ton-connect-page__provider-app-name">
-                            {{ walletExtended.appName }}
-                        </span>
+              {{ walletExtended.appName }}
+            </span>
           </p>
           <AppLink :to="walletExtended.aboutUrl">
             About connected wallet
@@ -40,6 +89,8 @@ const rows = computed<DisplayDataRow[]>(() => {
         </div>
       </div>
       <AppDisplayData :rows />
+      <button @click="payTon">payTon</button>
+      <button @click="payJetton">payJetton</button>
     </template>
     <div class="ton-connect-page__button-container">
       <TonConnectButton />

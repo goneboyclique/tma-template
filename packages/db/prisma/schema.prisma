@@ -36,8 +36,8 @@ model User {
 
 model Payment {
   id           String   @id // unique payment ID
-  payload      Json // TonConnectUI transaction payload
-  recipient    String
+  payload      String // TonConnectUI transaction payload
+  to    String
   currency     Currency
   amount       String
   jettonMaster String? // required for Jetton payments
