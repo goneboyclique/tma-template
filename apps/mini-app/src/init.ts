@@ -10,7 +10,8 @@ import {
   emitEvent,
   miniApp,
   backButton,
-} from '@tma.js/sdk-vue';
+} from "@tma.js/sdk-vue";
+import { configureClient } from "@pkg/api/config";
 
 /**
  * Initializes the application and configures its dependencies.
@@ -26,7 +27,7 @@ export async function init(options: {
 
   // Add Eruda if needed.
   if (options.eruda) {
-    import('eruda').then(({ default: eruda }) => {
+    import("eruda").then(({ default: eruda }) => {
       eruda.init();
       eruda.position({ x: window.innerWidth - 50, y: 0 });
     });
@@ -39,7 +40,7 @@ export async function init(options: {
     let firstThemeSent = false;
     mockTelegramEnv({
       onEvent(event, next) {
-        if (event.name === 'web_app_request_theme') {
+        if (event.name === "web_app_request_theme") {
           let tp: ThemeParams = {};
           if (firstThemeSent) {
             tp = themeParams.state();
@@ -47,11 +48,16 @@ export async function init(options: {
             firstThemeSent = true;
             tp ||= retrieveLaunchParams().tgWebAppThemeParams;
           }
-          return emitEvent('theme_changed', { theme_params: tp });
+          return emitEvent("theme_changed", { theme_params: tp });
         }
 
-        if (event.name === 'web_app_request_safe_area') {
-          return emitEvent('safe_area_changed', { left: 0, top: 0, right: 0, bottom: 0 });
+        if (event.name === "web_app_request_safe_area") {
+          return emitEvent("safe_area_changed", {
+            left: 0,
+            top: 0,
+            right: 0,
+            bottom: 0,
+          });
         }
 
         next();
@@ -62,6 +68,15 @@ export async function init(options: {
   // Mount all components used in the project.
   backButton.mount.ifAvailable();
   initData.restore();
+
+  // Send the raw Telegram init data on every API request, so the backend's
+  // TelegramAuthGuard can validate the current user.
+  configureClient({
+    getHeaders: () => {
+      const raw = initData.raw();
+      return raw ? { tgInitData: raw } : undefined;
+    },
+  });
 
   if (miniApp.mount.isAvailable()) {
     themeParams.mount();

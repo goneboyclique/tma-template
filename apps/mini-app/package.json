@@ -16,6 +16,8 @@
     "lint:fix": "eslint . --report-unused-disable-directives --max-warnings 0 --fix"
   },
   "dependencies": {
+    "@pkg/api": "workspace:*",
+    "@pkg/db": "workspace:*",
     "@tma.js/sdk-vue": "^1.0.8",
     "@tonconnect/ui": "^2.0.9",
     "eruda": "^3.4.1",
