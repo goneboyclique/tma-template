@@ -39,7 +39,6 @@ export class TonService {
     jettonMaster: Address,
     owner: Address,
   ): Promise<Address> {
-    console.log('this.client', this.client)
     const master = this.client.open(JettonMaster.create(jettonMaster));
     return master.getWalletAddress(owner);
   }

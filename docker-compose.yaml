@@ -23,11 +23,16 @@
 x-database-url: &database_url postgresql://${POSTGRES_USER:?required in .env}:${POSTGRES_PASSWORD:?required in .env}@postgres:5432/${POSTGRES_DB:?required in .env}
 
 # Shared by `api` and `migrate` so both run the exact same image.
+#
+# NOTE: the Dockerfile no longer builds from raw source (no pnpm/turbo
+# inside it). `build.context` below points at the PRE-BUILT tree produced by
+# `./scripts/build-and-push.sh` (defaults to `./out`), not the repo root.
+# Run that script first, or just rely on `image:` if you already pushed one.
 x-api-image: &api_image
   image: ${API_IMAGE:-archiveplay-api:latest}
   build:
-    context: .
-    dockerfile: ./apps/api/Dockerfile
+    context: ./out
+    dockerfile: ../apps/api/Dockerfile
   networks:
     - app_network
 

@@ -1,0 +1,151 @@
+# ---------------------------------------------------------------------------
+# ton-payment-api — standalone customer deployment
+#
+# This is the ONLY file you need. There is no .env file: every value that
+# must be set is inlined below and marked "CHANGE ME". Edit them, then run:
+#
+#   docker compose -f docker-compose.customer.yml up -d
+#
+# This stack brings its OWN dedicated PostgreSQL database. It will never
+# read from, write to, or otherwise touch any database you already run.
+# Data is persisted in the `ton_payment_postgres_data` named volume, on its
+# own isolated network (`ton_payment_network`).
+#
+# No Redis is deployed. The API falls back to its built-in in-memory cache;
+# see the `REDIS_URL` note in the `api` service below.
+# ---------------------------------------------------------------------------
+
+# Shared by `api` and `migrate` so both run the exact same image.
+x-api-image: &api_image
+  # Pre-built image published by the vendor. Pin an exact version tag
+  # (not `latest`) once you've qualified a release.
+  # image: ${API_IMAGE:-ghcr.io/yourorg/ton-payment-api:latest}
+  image: ${API_IMAGE:-ghcr.io/clayzenx/ton-payment-api:latest}
+
+  # Uncomment to build locally instead of pulling the image. Only works if
+  # you were given the full repository and have run
+  # `./scripts/build-and-push.sh` first (it produces the pre-built `./out`
+  # tree the Dockerfile expects -- the Dockerfile itself runs no pnpm/turbo).
+  # build:
+  #   context: ./out
+  #   dockerfile: ../apps/api/Dockerfile
+
+  networks:
+    - ton_payment_network
+
+services:
+  # ---------------------------------------------------------------------------
+  # PostgreSQL — dedicated to this service only.
+  # ---------------------------------------------------------------------------
+  postgres:
+    image: postgres:17
+    restart: unless-stopped
+
+    environment:
+      POSTGRES_USER: ton_payment
+      #POSTGRES_PASSWORD: CHANGE_ME_STRONG_PASSWORD # ⚠ CHANGE ME
+      POSTGRES_PASSWORD: strongpassword # ⚠ CHANGE ME
+      POSTGRES_DB: ton_payment
+
+    volumes:
+      - ton_payment_postgres_data:/var/lib/postgresql/data
+
+    networks:
+      - ton_payment_network
+
+    # Not published to the host by default — only `api`/`migrate` can reach
+    # it, over the internal network. Uncomment for host access (e.g. backups):
+    # ports:
+    #   - "127.0.0.1:5432:5432"
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ton_payment -d ton_payment"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ---------------------------------------------------------------------------
+  # Migrations (one-shot). Runs `prisma migrate deploy` and exits; the API
+  # waits for it to succeed so it can never boot against an outdated schema.
+  # ---------------------------------------------------------------------------
+  migrate:
+    <<: *api_image
+
+    working_dir: /app/packages/db
+    command: ["node_modules/.bin/prisma", "migrate", "deploy"]
+
+    environment:
+      # Must match the postgres service above.
+      #DATABASE_URL: postgresql://ton_payment:CHANGE_ME_STRONG_PASSWORD@postgres:5432/ton_payment # ⚠ CHANGE ME
+      DATABASE_URL: postgresql://ton_payment:strongpassword@postgres:5432/ton_payment # ⚠ CHANGE ME
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+    restart: "no"
+
+  # ---------------------------------------------------------------------------
+  # Nest API
+  # ---------------------------------------------------------------------------
+  api:
+    <<: *api_image
+    restart: unless-stopped
+
+    environment:
+      # --- infra (DATABASE_URL must match the postgres service above) ---
+      #DATABASE_URL: postgresql://ton_payment:CHANGE_ME_STRONG_PASSWORD@postgres:5432/ton_payment # ⚠ CHANGE ME
+      DATABASE_URL: postgresql://ton_payment:strongpassword@postgres:5432/ton_payment # ⚠ CHANGE ME
+      NODE_ENV: production
+      PORT: 4000
+      CORS_ORIGINS: https://your-frontend.example.com # ⚠ CHANGE ME
+
+      # --- required secrets/config ---
+      #TELEGRAM_BOT_TOKEN: CHANGE_ME # ⚠ CHANGE ME — Telegram bot token
+      TELEGRAM_BOT_TOKEN: 8914796580:AAG8DK15tlbp1Y4XYdbl_DBZ9W8FchUeXbY # required — token of the bot backing the mini app
+      #PAYMENT_WALLET: CHANGE_ME # ⚠ CHANGE ME — TON wallet receiving payments
+      PAYMENT_WALLET: 0QAh6qcowvJpqWHB9HJ_0I4MoJpJPy3-DaGgU3-DEGY2aub9
+      #TONCENTER_API_KEY: CHANGE_ME # ⚠ CHANGE ME
+      TONCENTER_API_KEY: 4d0147b9c3927a9eb51203d6395881f381524cda1aab443fefff99e5c77eb9f7
+      USDT_JETTON_MASTER: kQCDV9KOSMCkniZAuGsddFbdKExF6aOfw5tNEnY9op81CwQa # testnet default — replace for mainnet
+
+      # --- optional (defaults shown) ---
+      TONCENTER_API_URL: https://testnet.toncenter.com/api/v2/jsonRPC
+      TONCENTER_WS_URL: wss://testnet.toncenter.com/api/streaming/v2/ws
+      CACHE_TTL: "60000"
+
+      # No Redis is deployed here. The app still defaults REDIS_URL to
+      # redis://localhost:6379 internally, which will fail to connect
+      # inside this container — harmless (the in-memory cache still works,
+      # it just logs connection errors). Point this at your own Redis
+      # instance to silence that and enable the shared/secondary cache:
+      # REDIS_URL: redis://your-redis-host:6379
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+
+    # Change to "127.0.0.1:4000:4000" if you put a reverse proxy in front.
+    ports:
+      - "4000:4000"
+
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:4000/api-json').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+volumes:
+  ton_payment_postgres_data:
+
+networks:
+  ton_payment_network:
