@@ -27,10 +27,9 @@ export class PaymentsService {
       input,
     );
 
-    return payment;
-
-    // return this.prismaService.client.payment.create({
-    //   data: { payload, user_id: user.id },
-    // });
+    // return this.prismaService.client.payment.create({ data: {
+    //   amount: payment.amount,
+    //
+    // }});
   }
 }

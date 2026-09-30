@@ -17,7 +17,7 @@ const payTon = async () => {
   const { data: payment } = await q.mutateAsync({
     data: {
       currency: 'TON',
-      amount: '1000000',
+      amount: '10000',
     },
   })
 
@@ -39,7 +39,7 @@ const payJetton = async () => {
   const { data: payment } = await q.mutateAsync({
     data: {
       currency: 'USDT',
-      amount: '1000000',
+      amount: '10000',
     },
   })
 

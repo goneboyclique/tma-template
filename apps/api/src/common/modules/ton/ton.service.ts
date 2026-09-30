@@ -4,8 +4,6 @@ import { env } from '@tooling/env/tma';
 import { PaymentCreateReqDto } from 'src/common/dto/payment.dto';
 import { isJettonCurrency, JettonCurrency } from 'src/common/types/ton.type';
 import { buildJettonTransferBody } from 'src/common/utils/ton.utils';
-// import { retry } from 'src/common/utils/req.utils';
-// import { getNormalizedExtMessageHash } from 'src/common/utils/ton.utils';
 
 // Minimal TON forwarded to the payment wallet's jetton wallet so it emits
 // a `transfer_notification` to the payment wallet owner.
@@ -54,7 +52,6 @@ export class TonService {
 
     if (isJettonCurrency(currency)) {
       const jettonMaster = Address.parse(this.getJettonMaster(currency));
-      console.log('jettonMaster', jettonMaster)
 
       // TON Connect `to` = sender's Jetton Wallet
       const senderJettonWallet = await this.getJettonWalletAddress(
@@ -88,54 +85,4 @@ export class TonService {
       currency,
     };
   }
-
-  //
-  // async findTransactionByExternalMessage(inMessageBoc: string) {
-  //   const inMessage = loadMessage(Cell.fromBase64(inMessageBoc).beginParse());
-  //
-  //   if (inMessage.info.type !== 'external-in') {
-  //     throw new Error(
-  //       `Message must be "external-in", got ${inMessage.info.type}`,
-  //     );
-  //   }
-  //
-  //   const account = inMessage.info.dest;
-  //
-  //   const targetInMessageHash = getNormalizedExtMessageHash(inMessage);
-  //
-  //   let lt: string | undefined = undefined;
-  //   let hash: string | undefined = undefined;
-  //
-  //   while (true) {
-  //     const transactions = await retry(
-  //       () =>
-  //         this.client.getTransactions(account, {
-  //           hash,
-  //           lt,
-  //           limit: 10,
-  //           archival: true,
-  //         }),
-  //       { delay: 1000, retries: 3 },
-  //     );
-  //     if (transactions.length === 0) {
-  //       // No more transactions found - message may not be processed yet
-  //       return undefined;
-  //     }
-  //     // Step 5. Search for a transaction whose input message matches the normalized hash
-  //     for (const transaction of transactions) {
-  //       if (transaction.inMessage?.info.type !== 'external-in') {
-  //         continue;
-  //       }
-  //       const inMessageHash = getNormalizedExtMessageHash(
-  //         transaction.inMessage,
-  //       );
-  //       if (inMessageHash.equals(targetInMessageHash)) {
-  //         return transaction;
-  //       }
-  //     }
-  //     const last = transactions.at(-1)!;
-  //     lt = last.lt.toString();
-  //     hash = last.hash().toString('base64');
-  //   }
-  // }
 }
