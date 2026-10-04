@@ -35,14 +35,21 @@ model User {
 }
 
 model Payment {
-  id           String   @id // unique payment ID
-  payload      String // TonConnectUI transaction payload
+  id           String        @id @default(uuid()) // unique payment ID
+  status       PaymentStatus @default(PENDING)
+  txHash       String?
   to           String
   currency     Currency
   amount       String
   jettonMaster String? // required for Jetton payments
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+}
+
+enum PaymentStatus {
+  PENDING
+  CONFIRMED
+  FAILED
 }
 
 enum Currency {

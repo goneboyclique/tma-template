@@ -21,11 +21,22 @@ export class PaymentsService {
 
     const recipient = env.PAYMENT_WALLET;
 
-    const payment = await this.tonService.buildPayment(
-      user.ton_wallet_address,
-      recipient,
-      input,
-    );
+    const payment = await this.prismaService.client.payment.create({
+      data: {
+        // userId: user.id,
+        // currency: input.currency,
+        // amount: input.amount,
+        // status: 'PENDING',
+      },
+    });
+
+    // const payment = await this.tonService.buildPayment(
+    //   user.ton_wallet_address,
+    //   recipient,
+    //   input,
+    // );
+
+    return payment;
 
     // return this.prismaService.client.payment.create({ data: {
     //   amount: payment.amount,

@@ -71,7 +71,7 @@ export class TonStreamService implements OnModuleInit, OnModuleDestroy {
     this.send({
       operation: 'subscribe',
       types: ['transactions'],
-      addresses: [env.PAYMENT_WALLET!],
+      addresses: [env.PAYMENT_WALLET],
       min_finality: 'finalized',
       id: 'payments',
     });
