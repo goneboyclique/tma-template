@@ -4,6 +4,7 @@ import { PaymentCreateReqDto } from 'src/common/dto/payment.dto';
 import { PrismaService } from 'src/common/modules/prisma/prisma.service';
 import { TonService } from 'src/common/modules/ton/ton.service';
 import type { TelegramUser as TmaUser } from 'src/common/types/tgUser.type';
+import { isJettonCurrency } from 'src/common/types/ton.type';
 
 @Injectable()
 export class PaymentsService {
@@ -23,24 +24,16 @@ export class PaymentsService {
 
     const payment = await this.prismaService.client.payment.create({
       data: {
-        // userId: user.id,
-        // currency: input.currency,
-        // amount: input.amount,
-        // status: 'PENDING',
+        to: recipient,
+        currency: input.currency,
+        amount: input.amount,
+        status: 'PENDING',
+        jettonMaster: isJettonCurrency(input.currency)
+          ? this.tonService.getJettonMaster(input.currency)
+          : null,
       },
     });
 
-    // const payment = await this.tonService.buildPayment(
-    //   user.ton_wallet_address,
-    //   recipient,
-    //   input,
-    // );
-
-    return payment;
-
-    // return this.prismaService.client.payment.create({ data: {
-    //   amount: payment.amount,
-    //
-    // }});
+    return this.tonService.buildPayment(payment, user.ton_wallet_address);
   }
 }

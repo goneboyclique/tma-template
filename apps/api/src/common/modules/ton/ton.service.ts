@@ -1,7 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
+import { PaymentType } from '@pkg/db/schemas';
 import { Address, comment, JettonMaster, TonClient } from '@ton/ton';
 import { env } from '@tooling/env/tma';
-import { PaymentCreateReqDto } from 'src/common/dto/payment.dto';
 import { isJettonCurrency, JettonCurrency } from 'src/common/types/ton.type';
 import { buildJettonTransferBody } from 'src/common/utils/ton.utils';
 
@@ -40,49 +40,41 @@ export class TonService {
     const master = this.client.open(JettonMaster.create(jettonMaster));
     return master.getWalletAddress(owner);
   }
-
-  async buildPayment(
-    sender: string,
-    recipient: string,
-    { currency, amount }: PaymentCreateReqDto,
-  ) {
-    const id = 'future input id from prisma entity';
+  async buildPayment(payment: PaymentType, sender: string) {
     const senderAddress = Address.parse(sender);
-    const recipientAddress = Address.parse(recipient);
+    const recipientAddress = Address.parse(payment.to);
 
-    if (isJettonCurrency(currency)) {
-      const jettonMaster = Address.parse(this.getJettonMaster(currency));
+    if (isJettonCurrency(payment.currency)) {
+      const jettonMaster = Address.parse(payment.jettonMaster!);
 
-      // TON Connect `to` = sender's Jetton Wallet
       const senderJettonWallet = await this.getJettonWalletAddress(
         jettonMaster,
         senderAddress,
       );
 
       const body = buildJettonTransferBody({
-        jettonAmount: BigInt(amount),
+        jettonAmount: BigInt(payment.amount),
         toOwnerAddress: recipientAddress,
         responseAddress: senderAddress,
         forwardTonAmount: JETTON_FORWARD_TON_AMOUNT,
-        forwardComment: id,
+        forwardComment: payment.id,
       });
 
       return {
-        id,
+        id: payment.id,
         to: senderJettonWallet.toString(),
         payload: body.toBoc().toString('base64'),
-        amount: JETTON_TRANSFER_GAS_AMOUNT, // TON attached to transaction,
-        currency,
+        amount: JETTON_TRANSFER_GAS_AMOUNT,
+        currency: payment.currency,
       };
     }
 
-    // Native TON transfer
     return {
-      id,
-      to: recipient,
-      payload: comment(id).toBoc().toString('base64'),
-      amount,
-      currency,
+      id: payment.id,
+      to: payment.to,
+      payload: comment(payment.id).toBoc().toString('base64'),
+      amount: payment.amount,
+      currency: payment.currency,
     };
   }
 }
