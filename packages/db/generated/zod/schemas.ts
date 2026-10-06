@@ -75,7 +75,12 @@ export type NullsOrder = z.infer<typeof NullsOrderSchema>;
 
 // File: PaymentStatus.schema.ts
 
-export const PaymentStatusSchema = z.enum(["PENDING", "CONFIRMED", "FAILED"]);
+export const PaymentStatusSchema = z.enum([
+  "PENDING",
+  "CONFIRMED",
+  "VERIFIED",
+  "FAILED",
+]);
 
 export type PaymentStatus = z.infer<typeof PaymentStatusSchema>;
 

@@ -49,6 +49,7 @@ model Payment {
 enum PaymentStatus {
   PENDING
   CONFIRMED
+  VERIFIED
   FAILED
 }
 
