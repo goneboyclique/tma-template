@@ -8,6 +8,7 @@ import WebSocket from 'ws';
 import { env } from '@tooling/env/tma';
 import EventEmitter from 'node:events';
 import { TonStreamMessage } from 'src/common/types/ton.type';
+import { TonService } from './ton.service';
 
 @Injectable()
 export class TonStreamService implements OnModuleInit, OnModuleDestroy {
@@ -20,8 +21,14 @@ export class TonStreamService implements OnModuleInit, OnModuleDestroy {
   private readonly url = env.TONCENTER_WS_URL;
   private readonly events = new EventEmitter();
 
+  constructor(private readonly tonService: TonService) {}
+
   onTransaction(callback: (message: TonStreamMessage) => void) {
     this.events.on('transaction', callback);
+
+    return () => {
+      this.events.off('transaction', callback);
+    };
   }
 
   private emitTransaction(message: TonStreamMessage) {
@@ -67,11 +74,13 @@ export class TonStreamService implements OnModuleInit, OnModuleDestroy {
     });
   }
 
-  private subscribe() {
+  private async subscribe() {
+    const addresses = await this.tonService.getSupportedWallets()
+
     this.send({
       operation: 'subscribe',
       types: ['transactions'],
-      addresses: [env.PAYMENT_WALLET],
+      addresses,
       min_finality: 'finalized',
       id: 'payments',
     });
@@ -113,14 +122,18 @@ export class TonStreamService implements OnModuleInit, OnModuleDestroy {
   }
 
   private async handleMessage(raw: string) {
-    const message = JSON.parse(raw) as TonStreamMessage;
+    try {
+      const message = JSON.parse(raw) as TonStreamMessage;
 
-    if (message.status === 'subscribed') {
-      this.logger.log('TON subscription active');
-    }
+      if (message.status === 'subscribed') {
+        this.logger.log('TON subscription active');
+      }
 
-    if (message.type === 'transactions') {
-      this.emitTransaction(message);
+      if (message.type === 'transactions') {
+        this.emitTransaction(message);
+      }
+    } catch (error) {
+      this.logger.error('Invalid TON WS message', error);
     }
   }
 }

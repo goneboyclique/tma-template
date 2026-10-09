@@ -3,6 +3,7 @@ import { TonClient } from '@ton/ton';
 import { TonService } from './ton.service';
 import { TonStreamService } from './ton-stream.service';
 import { env } from '@tooling/env/tma';
+import { TonTransactionService } from './ton-transaction.service';
 
 @Module({
   providers: [
@@ -16,6 +17,7 @@ import { env } from '@tooling/env/tma';
     },
     TonService,
     TonStreamService,
+    TonTransactionService,
   ],
   exports: ['TON_CLIENT', TonService, TonStreamService],
 })

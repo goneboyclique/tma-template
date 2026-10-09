@@ -6,8 +6,6 @@ if (!tunnel) throw new Error("Untun tunnel is undefined");
 
 const apiUrl = await tunnel.getURL();
 
-console.log(`API tunnel: ${apiUrl}`);
-
 const turbo = spawn("pnpm", ["-w", "exec", "turbo", "dev"], {
   stdio: "inherit",
   env: {

@@ -2,20 +2,15 @@ import { Inject, Injectable } from '@nestjs/common';
 import { PaymentType } from '@pkg/db/schemas';
 import { Address, comment, JettonMaster, TonClient } from '@ton/ton';
 import { env } from '@tooling/env/tma';
-import { isJettonCurrency, JettonCurrency } from 'src/common/types/ton.type';
-import { buildJettonTransferBody } from 'src/common/utils/ton.utils';
-
-// Minimal TON forwarded to the payment wallet's jetton wallet so it emits
-// a `transfer_notification` to the payment wallet owner.
-const JETTON_FORWARD_TON_AMOUNT = 1n;
-
-// TON attached to a jetton-transfer message to cover the on-chain gas for
-// the sender's jetton wallet -> payment wallet's jetton wallet hop.
-const JETTON_TRANSFER_GAS_AMOUNT = '50000000'; // 0.05 TON
-
-const jettonMasters: Record<JettonCurrency, string> = {
-  USDT: env.USDT_JETTON_MASTER,
-};
+import {
+  JETTON_FORWARD_TON_AMOUNT,
+  JETTON_TRANSFER_GAS_AMOUNT,
+  jettonMasters,
+} from 'src/common/constants/ton.constants';
+import {
+  buildJettonTransferBody,
+  isJettonCurrency,
+} from 'src/common/utils/ton.utils';
 
 @Injectable()
 export class TonService {
@@ -23,10 +18,6 @@ export class TonService {
     @Inject('TON_CLIENT')
     private readonly client: TonClient,
   ) {}
-
-  getJettonMaster(currency: JettonCurrency) {
-    return jettonMasters[currency.toUpperCase() as JettonCurrency];
-  }
 
   /**
    * Resolves the jetton wallet contract address owned by `owner` for the
@@ -40,6 +31,24 @@ export class TonService {
     const master = this.client.open(JettonMaster.create(jettonMaster));
     return master.getWalletAddress(owner);
   }
+
+  async getSupportedWallets(): Promise<string[]> {
+    const owner = Address.parse(env.PAYMENT_WALLET);
+
+    const jettonWallets = await Promise.all(
+      Object.values(jettonMasters)
+        .filter((master): master is string => !!master)
+        .map((master) =>
+          this.getJettonWalletAddress(Address.parse(master), owner),
+        ),
+    );
+
+    return [
+      owner.toRawString(),
+      ...jettonWallets.map((wallet) => wallet.toRawString()),
+    ];
+  }
+
   async buildPayment(payment: PaymentType, sender: string) {
     const senderAddress = Address.parse(sender);
     const recipientAddress = Address.parse(payment.to);

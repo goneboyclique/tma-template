@@ -4,7 +4,7 @@ import { PaymentCreateReqDto } from 'src/common/dto/payment.dto';
 import { PrismaService } from 'src/common/modules/prisma/prisma.service';
 import { TonService } from 'src/common/modules/ton/ton.service';
 import type { TelegramUser as TmaUser } from 'src/common/types/tgUser.type';
-import { isJettonCurrency } from 'src/common/types/ton.type';
+import { getJettonMaster, isJettonCurrency } from 'src/common/utils/ton.utils';
 
 @Injectable()
 export class PaymentsService {
@@ -29,7 +29,7 @@ export class PaymentsService {
         amount: input.amount,
         status: 'PENDING',
         jettonMaster: isJettonCurrency(input.currency)
-          ? this.tonService.getJettonMaster(input.currency)
+          ? getJettonMaster(input.currency)
           : null,
       },
     });
