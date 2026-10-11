@@ -30,6 +30,9 @@ export const tmaApiEnvSchema = z.object({
   // Jetton master contract address for USDT on TON, used to resolve
   // per-user jetton wallets and to validate incoming jetton transfers.
   USDT_JETTON_MASTER: z.string().min(1),
+
+  OBSERVE_APP_SECRET: z.string(),
+  OBSERVE_APP_KEY: z.string()
 });
 
 export const env = tmaApiEnvSchema.parse(process.env);
