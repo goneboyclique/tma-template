@@ -1,17 +1,16 @@
 import { fileURLToPath, URL } from "node:url";
 
-import { defineConfig, searchForWorkspaceRoot } from "vite";
+import { defineConfig, loadEnv, searchForWorkspaceRoot } from "vite";
 import vue from "@vitejs/plugin-vue";
 import vueDevTools from "vite-plugin-vue-devtools";
 import mkcert from "vite-plugin-mkcert";
-import { initEnv, env } from "@tooling/env/vite";
 
 const workspaceRoot = searchForWorkspaceRoot(process.cwd());
 const base = "/tma";
 
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
-  initEnv(mode);
+  const env = loadEnv(mode, process.cwd(), "VITE_")
 
   return {
     base,

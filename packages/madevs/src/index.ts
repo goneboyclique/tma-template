@@ -1,5 +1,9 @@
 import { spawn } from "node:child_process";
+import { loadEnvFile } from 'node:process';
+
 import { createTunnel } from "./tunnel.js";
+
+loadEnvFile(new URL('../../../.env', import.meta.url).pathname);
 
 const tunnel = await createTunnel(4000);
 if (!tunnel) throw new Error("Untun tunnel is undefined");
