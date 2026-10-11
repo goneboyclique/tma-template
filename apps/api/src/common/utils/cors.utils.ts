@@ -1,15 +1,9 @@
 import { INestApplication } from '@nestjs/common';
-import { env } from '@tooling/env/tma';
-
-const CORS_ORIGINS = env.CORS_ORIGINS;
-
-const origin = Array.isArray(CORS_ORIGINS)
-  ? (CORS_ORIGINS?.split(',').map((item) => item.trim()) ?? [])
-  : CORS_ORIGINS;
+import { CORS_ORIGINS } from '../constants/env.constants';
 
 export const setupCors = (app: INestApplication) => {
   app.enableCors({
-    origin,
+    origin: CORS_ORIGINS,
     methods: 'GET,POST,PUT,DELETE,OPTIONS',
     allowedHeaders: 'Content-Type, Authorization',
   });
