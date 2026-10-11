@@ -10,7 +10,7 @@ const base = "/tma";
 
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
-  const env = loadEnv(mode, process.cwd(), "VITE_")
+  const env = loadEnv(mode, process.cwd(), "VITE_");
 
   return {
     base,

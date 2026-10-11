@@ -15,6 +15,7 @@ import { PaymentType } from '@pkg/db/schemas';
 import { Maybe } from '@ton/core/dist/utils/maybe';
 import { JETTON_TRANSFER_NOTIFICATION_OPCODE_HEX } from 'src/common/constants/ton.constants';
 import { Address } from '@ton/core';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 @Injectable()
 export class TonTransactionService implements OnModuleInit {
@@ -23,6 +24,7 @@ export class TonTransactionService implements OnModuleInit {
   constructor(
     private readonly tonStream: TonStreamService,
     private readonly prismaService: PrismaService,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   private log(message: TonStreamMessage) {
@@ -51,6 +53,7 @@ export class TonTransactionService implements OnModuleInit {
       }
     });
   }
+
   private async handleTransactionMessage(message: TonStreamMessage) {
     const transactions = message.transactions ?? [];
 
@@ -77,10 +80,10 @@ export class TonTransactionService implements OnModuleInit {
     });
     if (!payment || !this.verify(tx, payment, jettonTransfer)) return;
 
-    await this.prismaService.client.payment.update({
-      where: { id: paymentId },
-      data: { status: 'VERIFIED' },
-    });
+    console.log('verified -> appley payment', payment.id);
+
+    this.eventEmitter.emit('payment.verified', payment.id);
+    // this.paymentsService.applyPayment(payment.id)
   }
 
   verify(

@@ -1,6 +1,13 @@
 import { beginCell, Cell, comment } from '@ton/core';
-import { JETTON_TRANSFER_NOTIFICATION_OP, JETTON_TRANSFER_OP, jettonMasters } from '../constants/ton.constants';
-import { BuildJettonTransferBodyParams, JettonCurrency } from '../types/ton.type';
+import {
+  JETTON_TRANSFER_NOTIFICATION_OP,
+  JETTON_TRANSFER_OP,
+  jettonMasters,
+} from '../constants/ton.constants';
+import {
+  BuildJettonTransferBodyParams,
+  JettonCurrency,
+} from '../types/ton.type';
 import { Currency } from '@pkg/db/schemas';
 
 // Is it Jetton currency or native 'TON' check helper
@@ -72,9 +79,7 @@ export function decodeJettonTransferNotification(body?: string | null) {
     const sender = slice.loadAddress();
 
     const isRef = slice.loadBit();
-    const forwardPayload = isRef
-      ? slice.loadRef().beginParse()
-      : slice;
+    const forwardPayload = isRef ? slice.loadRef().beginParse() : slice;
 
     if (
       forwardPayload.remainingBits < 32 ||
@@ -98,4 +103,3 @@ export function decodeJettonTransferNotification(body?: string | null) {
 export function getJettonMaster(currency: JettonCurrency) {
   return jettonMasters[currency.toUpperCase() as JettonCurrency];
 }
-

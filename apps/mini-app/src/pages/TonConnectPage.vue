@@ -1,16 +1,17 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, watch } from 'vue';
 import { TonConnectButton, useTonWallet } from '@/tonconnect';
 import AppDisplayData, { type DisplayDataRow } from '@/components/AppDisplayData.vue';
 import AppLink from '@/components/AppLink.vue';
 import AppPage from '@/components/AppPage.vue';
 import { usePaymentsControllerCreatePayments } from '@pkg/api/client/vue';
 import { useTonConnectUI } from '@/tonconnect/useTonConnectUI';
+import { usePaymentTracking } from '@/composables/usePayment';
 
 const q = usePaymentsControllerCreatePayments()
 
 const { tonConnectUI } = useTonConnectUI()
-
+const { payment, trackPayment, stopTracking } = usePaymentTracking()
 const { wallet } = useTonWallet();
 
 const payTon = async () => {
@@ -32,28 +33,32 @@ const payTon = async () => {
     ],
   });
 
-  console.log('payment', payment)
 }
 
+watch(payment, upd => {
+  console.log('payment updated', upd)
+})
+
 const payJetton = async () => {
-  const { data: payment } = await q.mutateAsync({
+  const { data: tx } = await q.mutateAsync({
     data: {
       currency: 'USDT',
       amount: '10000',
     },
   })
 
+  trackPayment(tx.id)
+
   await tonConnectUI.sendTransaction({
     validUntil: Math.floor(Date.now() / 1000) + 300,
     messages: [
       {
-        address: payment.to,
-        amount: payment.amount,
-        payload: payment.payload,
+        address: tx.to,
+        amount: tx.amount,
+        payload: tx.payload,
       },
     ],
   });
-  console.log('payment', payment)
 }
 
 const walletExtended = computed(() => {
@@ -91,6 +96,7 @@ const rows = computed<DisplayDataRow[]>(() => {
       <AppDisplayData :rows />
       <button @click="payTon">payTon</button>
       <button @click="payJetton">payJetton</button>
+      <pre>{{ payment }}</pre>
     </template>
     <div class="ton-connect-page__button-container">
       <TonConnectButton />

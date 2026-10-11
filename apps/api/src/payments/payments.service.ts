@@ -5,12 +5,15 @@ import { PrismaService } from 'src/common/modules/prisma/prisma.service';
 import { TonService } from 'src/common/modules/ton/ton.service';
 import type { TelegramUser as TmaUser } from 'src/common/types/tgUser.type';
 import { getJettonMaster, isJettonCurrency } from 'src/common/utils/ton.utils';
+import { PaymentGateway } from './payment.gateway';
+import { OnEvent } from '@nestjs/event-emitter';
 
 @Injectable()
 export class PaymentsService {
   constructor(
     private readonly prismaService: PrismaService,
     private readonly tonService: TonService,
+    private readonly paymentGateway: PaymentGateway,
   ) {}
 
   async createPayment(telegramUser: TmaUser, input: PaymentCreateReqDto) {
@@ -35,5 +38,22 @@ export class PaymentsService {
     });
 
     return this.tonService.buildPayment(payment, user.ton_wallet_address);
+  }
+
+  @OnEvent('payment.verified')
+  async handleVerifiedPayment(paymentId: string) {
+    console.log('catched', paymentId);
+    await this.applyPayment(paymentId);
+  }
+
+  async applyPayment(paymentId: string) {
+    const payment = await this.prismaService.client.payment.update({
+      where: { id: paymentId },
+      data: { status: 'VERIFIED' },
+    });
+
+    console.log('payment.service apply', payment);
+
+    this.paymentGateway.emitUpdate(paymentId, 'payment.updated', payment);
   }
 }

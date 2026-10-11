@@ -75,7 +75,7 @@ export class TonStreamService implements OnModuleInit, OnModuleDestroy {
   }
 
   private async subscribe() {
-    const addresses = await this.tonService.getSupportedWallets()
+    const addresses = await this.tonService.getSupportedWallets();
 
     this.send({
       operation: 'subscribe',

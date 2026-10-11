@@ -32,7 +32,7 @@ export const tmaApiEnvSchema = z.object({
   USDT_JETTON_MASTER: z.string().min(1),
 
   OBSERVE_APP_SECRET: z.string(),
-  OBSERVE_APP_KEY: z.string()
+  OBSERVE_APP_KEY: z.string(),
 });
 
 export const env = tmaApiEnvSchema.parse(process.env);

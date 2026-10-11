@@ -56,4 +56,3 @@ export interface JettonTransferNotification {
   sender: Address;
   forwardComment?: string;
 }
-
