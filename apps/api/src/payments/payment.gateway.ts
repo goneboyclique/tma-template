@@ -36,9 +36,9 @@ export class PaymentGateway {
   @SubscribeMessage('payment.unsubscribe')
   unsubscribe(
     @ConnectedSocket() socket: Socket,
-    @MessageBody() data: { orderId: string },
+    @MessageBody() data: { paymentId: string },
   ) {
-    socket.leave(data.orderId);
+    socket.leave(data.paymentId);
   }
 
   emitUpdate(clientId: string, eventType: EventType, payload: PayloadType) {

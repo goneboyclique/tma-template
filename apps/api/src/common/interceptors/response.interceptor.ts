@@ -13,9 +13,12 @@ export class ResponseInterceptor<T> implements NestInterceptor<
   HttpResponse<T>
 > {
   intercept(
-    _: ExecutionContext,
+    context: ExecutionContext,
     next: CallHandler,
   ): Observable<HttpResponse<T>> {
+    if (context.getType() === 'ws') {
+      return next.handle();
+    }
     return next.handle().pipe(
       map((data: T): HttpResponse<T> => ({
         success: true,
