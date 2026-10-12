@@ -9,6 +9,7 @@ import { env } from '@tooling/env/tma';
 import EventEmitter from 'node:events';
 import { TonStreamMessage } from 'src/common/types/ton.type';
 import { TonService } from './ton.service';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 @Injectable()
 export class TonStreamService implements OnModuleInit, OnModuleDestroy {
@@ -19,21 +20,11 @@ export class TonStreamService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(TonStreamService.name);
 
   private readonly url = env.TONCENTER_WS_URL;
-  private readonly events = new EventEmitter();
 
-  constructor(private readonly tonService: TonService) {}
-
-  onTransaction(callback: (message: TonStreamMessage) => void) {
-    this.events.on('transaction', callback);
-
-    return () => {
-      this.events.off('transaction', callback);
-    };
-  }
-
-  private emitTransaction(message: TonStreamMessage) {
-    this.events.emit('transaction', message);
-  }
+  constructor(
+    private readonly tonService: TonService,
+    private readonly eventEmitter: EventEmitter2,
+  ) {}
 
   onModuleInit() {
     this.connect();
@@ -130,7 +121,7 @@ export class TonStreamService implements OnModuleInit, OnModuleDestroy {
       }
 
       if (message.type === 'transactions') {
-        this.emitTransaction(message);
+        this.eventEmitter.emit('transaction', message);
       }
     } catch (error) {
       this.logger.error('Invalid TON WS message', error);

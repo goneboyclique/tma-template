@@ -1,5 +1,4 @@
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
-import { TonStreamService } from './ton-stream.service';
+import { Injectable, Logger } from '@nestjs/common';
 import {
   JettonTransfer,
   TonStreamMessage,
@@ -15,14 +14,13 @@ import { PaymentType } from '@pkg/db/schemas';
 import { Maybe } from '@ton/core/dist/utils/maybe';
 import { JETTON_TRANSFER_NOTIFICATION_OPCODE_HEX } from 'src/common/constants/ton.constants';
 import { Address } from '@ton/core';
-import { EventEmitter2 } from '@nestjs/event-emitter';
+import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 
 @Injectable()
-export class TonTransactionService implements OnModuleInit {
+export class TonTransactionService {
   private readonly logger = new Logger(TonTransactionService.name);
 
   constructor(
-    private readonly tonStream: TonStreamService,
     private readonly prismaService: PrismaService,
     private readonly eventEmitter: EventEmitter2,
   ) {}
@@ -42,16 +40,14 @@ export class TonTransactionService implements OnModuleInit {
     });
   }
 
-  onModuleInit() {
-    this.tonStream.onTransaction(async (message) => {
-      this.log(message);
-
-      try {
-        await this.handleTransactionMessage(message);
-      } catch (error) {
-        this.logger.error('Failed to handle TON Center message', error);
-      }
-    });
+  @OnEvent('transaction')
+  async handleTransaction(message: TonStreamMessage) {
+    this.log(message);
+    try {
+      await this.handleTransactionMessage(message);
+    } catch (error) {
+      this.logger.error('Failed to handle TON Center message', error);
+    }
   }
 
   private async handleTransactionMessage(message: TonStreamMessage) {
