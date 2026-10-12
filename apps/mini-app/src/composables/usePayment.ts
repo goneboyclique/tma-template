@@ -1,14 +1,39 @@
 import { ref } from "vue";
 import { io, type Socket } from "socket.io-client";
-import type { PaymentType } from "@pkg/db/schemas";
+import type { Currency, PaymentType } from "@pkg/db/schemas";
 import { env } from "@tooling/env/vite";
+import { usePaymentsControllerCreatePayments } from "@pkg/api/client/vue";
+import { useTonConnectUI } from "@/tonconnect/useTonConnectUI";
 
-export function usePaymentTracking() {
+export function usePayment() {
   const payment = ref<PaymentType | null>(null);
-
   let socket: Socket | null;
-
   let trackingPaymentId: string | null = null;
+
+  const q = usePaymentsControllerCreatePayments();
+  const { tonConnectUI } = useTonConnectUI()
+
+  const pay = async (currency: Currency, amount: string) => {
+    const { data: tx } = await q.mutateAsync({
+      data: {
+        currency,
+        amount,
+      },
+    });
+
+    trackPayment(tx.id)
+
+    await tonConnectUI.sendTransaction({
+      validUntil: Math.floor(Date.now() / 1000) + 300,
+      messages: [
+        {
+          address: tx.to,
+          amount: tx.amount,
+          payload: tx.payload,
+        },
+      ],
+    });
+  };
 
   const trackPayment = (paymentId: string) => {
     stopTracking();
@@ -55,8 +80,10 @@ export function usePaymentTracking() {
   };
 
   return {
+    pay,
     payment,
     trackPayment,
     stopTracking,
   };
 }
+

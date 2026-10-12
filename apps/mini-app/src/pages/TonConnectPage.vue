@@ -1,64 +1,20 @@
 <script setup lang="ts">
-import { computed, watch } from 'vue';
+import { computed } from 'vue';
 import { TonConnectButton, useTonWallet } from '@/tonconnect';
 import AppDisplayData, { type DisplayDataRow } from '@/components/AppDisplayData.vue';
 import AppLink from '@/components/AppLink.vue';
 import AppPage from '@/components/AppPage.vue';
-import { usePaymentsControllerCreatePayments } from '@pkg/api/client/vue';
-import { useTonConnectUI } from '@/tonconnect/useTonConnectUI';
-import { usePaymentTracking } from '@/composables/usePayment';
+import { usePayment } from '@/composables/usePayment';
 
-const q = usePaymentsControllerCreatePayments()
-
-const { tonConnectUI } = useTonConnectUI()
-const { payment, trackPayment, stopTracking } = usePaymentTracking()
+const { pay, payment } = usePayment()
 const { wallet } = useTonWallet();
 
 const payTon = async () => {
-  const { data: payment } = await q.mutateAsync({
-    data: {
-      currency: 'TON',
-      amount: '10000',
-    },
-  })
-
-  await tonConnectUI.sendTransaction({
-    validUntil: Math.floor(Date.now() / 1000) + 300,
-    messages: [
-      {
-        address: payment.to,
-        amount: payment.amount,
-        payload: payment.payload,
-      },
-    ],
-  });
-
+  pay('TON', '10000')
 }
 
-watch(payment, upd => {
-  console.log('payment updated', upd)
-})
-
 const payJetton = async () => {
-  const { data: tx } = await q.mutateAsync({
-    data: {
-      currency: 'USDT',
-      amount: '10000',
-    },
-  })
-
-  trackPayment(tx.id)
-
-  await tonConnectUI.sendTransaction({
-    validUntil: Math.floor(Date.now() / 1000) + 300,
-    messages: [
-      {
-        address: tx.to,
-        amount: tx.amount,
-        payload: tx.payload,
-      },
-    ],
-  });
+  pay('USDT', '10000')
 }
 
 const walletExtended = computed(() => {
