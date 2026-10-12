@@ -80,10 +80,7 @@ export class TonTransactionService implements OnModuleInit {
     });
     if (!payment || !this.verify(tx, payment, jettonTransfer)) return;
 
-    console.log('verified -> appley payment', payment.id);
-
     this.eventEmitter.emit('payment.verified', payment.id);
-    // this.paymentsService.applyPayment(payment.id)
   }
 
   verify(

@@ -12,16 +12,16 @@ export const { ObserveModule, ObserveInstrument } = createObserveModule();
 
 @Module({
   imports: [
-    PrismaModule,
-    CacheModule,
-    UserModule,
-    PaymentsModule,
     ObserveModule.forRoot({
       appKey: env.OBSERVE_APP_KEY,
       appSecret: env.OBSERVE_APP_SECRET,
       serviceId: 'api',
     }),
     EventEmitterModule.forRoot(),
+    PrismaModule,
+    CacheModule,
+    UserModule,
+    PaymentsModule,
   ],
   providers: [QueryCacheInterceptorProvider],
 })

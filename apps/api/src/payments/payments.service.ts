@@ -42,7 +42,6 @@ export class PaymentsService {
 
   @OnEvent('payment.verified')
   async handleVerifiedPayment(paymentId: string) {
-    console.log('catched', paymentId);
     await this.applyPayment(paymentId);
   }
 
@@ -51,8 +50,6 @@ export class PaymentsService {
       where: { id: paymentId },
       data: { status: 'VERIFIED' },
     });
-
-    console.log('payment.service apply', payment);
 
     this.paymentGateway.emitUpdate(paymentId, 'payment.updated', payment);
   }
