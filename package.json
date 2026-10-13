@@ -1,9 +1,9 @@
 {
-  "name": "turborepo",
+  "name": "ton-payment",
   "version": "1.0.0",
   "author": "clay.zenx@gmail.com",
   "type": "module",
-  "description": "turborepo templates for your next future projects",
+  "description": "Self-hostable payment service for TON and USDT (jetton) payments",
   "packageManager": "pnpm@11.18.0",
   "lint-staged": {
     "*.{js,ts,vue,css,md,json}": "prettier --write"

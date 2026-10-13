@@ -1,4 +1,4 @@
-import { env } from 'process';
+import { env } from '@tooling/env/tma';
 import { JettonCurrency } from '../types/ton.type';
 
 /** TEP-74 `transfer` opcode. */
@@ -8,8 +8,11 @@ export const JETTON_TRANSFER_OP = 0x0f8a7ea5;
 export const JETTON_TRANSFER_NOTIFICATION_OP = 0x7362d09c;
 export const JETTON_TRANSFER_NOTIFICATION_OPCODE_HEX = `0x${JETTON_TRANSFER_NOTIFICATION_OP.toString(16)}`;
 
-/** jettons contract masters */
-export const jettonMasters: Record<JettonCurrency, string | undefined> = {
+/**
+ * Jetton master contracts, from the validated env (so a missing value fails
+ * at boot rather than silently yielding `undefined` here).
+ */
+export const jettonMasters: Record<JettonCurrency, string> = {
   USDT: env.USDT_JETTON_MASTER,
 };
 

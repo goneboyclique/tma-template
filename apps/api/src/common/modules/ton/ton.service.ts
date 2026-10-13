@@ -14,6 +14,14 @@ import {
 
 @Injectable()
 export class TonService {
+  /**
+   * `jettonMaster.toRawString()` -> the payment wallet's jetton wallet for
+   * that master. These are deterministic for a given (master, owner) pair,
+   * so they are resolved once and reused: incoming transfer notifications
+   * are validated against them on every verification.
+   */
+  private readonly paymentJettonWallets = new Map<string, Address>();
+
   constructor(
     @Inject('TON_CLIENT')
     private readonly client: TonClient,
@@ -32,15 +40,34 @@ export class TonService {
     return master.getWalletAddress(owner);
   }
 
+  /**
+   * The payment wallet's own jetton wallet for `jettonMaster`. Only this
+   * contract may credit the payment wallet with that jetton, so it is the
+   * only legitimate sender of a `transfer_notification` for it.
+   */
+  async getPaymentJettonWallet(jettonMaster: string): Promise<Address> {
+    const master = Address.parse(jettonMaster);
+    const key = master.toRawString();
+
+    const cached = this.paymentJettonWallets.get(key);
+    if (cached) return cached;
+
+    const wallet = await this.getJettonWalletAddress(
+      master,
+      Address.parse(env.PAYMENT_WALLET),
+    );
+    this.paymentJettonWallets.set(key, wallet);
+
+    return wallet;
+  }
+
   async getSupportedWallets(): Promise<string[]> {
     const owner = Address.parse(env.PAYMENT_WALLET);
 
     const jettonWallets = await Promise.all(
       Object.values(jettonMasters)
         .filter((master): master is string => !!master)
-        .map((master) =>
-          this.getJettonWalletAddress(Address.parse(master), owner),
-        ),
+        .map((master) => this.getPaymentJettonWallet(master)),
     );
 
     return [

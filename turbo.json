@@ -42,11 +42,6 @@
       "cache": false
     },
 
-    "db:reset": {
-      "env": ["DATABASE_URL"],
-      "cache": false
-    },
-
     "db:deploy": {
       "env": ["DATABASE_URL"],
       "cache": false

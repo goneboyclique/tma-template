@@ -7,9 +7,13 @@ import type { TelegramUser as TmaUser } from 'src/common/types/tgUser.type';
 import { getJettonMaster, isJettonCurrency } from 'src/common/utils/ton.utils';
 import { PaymentGateway } from './payment.gateway';
 import { OnEvent } from '@nestjs/event-emitter';
+import { Logger } from '@nestjs/common';
+import { PaymentVerifiedEvent } from 'src/common/types/payment.type';
 
 @Injectable()
 export class PaymentsService {
+  private readonly logger = new Logger(PaymentsService.name);
+
   constructor(
     private readonly prismaService: PrismaService,
     private readonly tonService: TonService,
@@ -41,16 +45,33 @@ export class PaymentsService {
   }
 
   @OnEvent('payment.verified')
-  async handleVerifiedPayment(paymentId: string) {
-    await this.applyPayment(paymentId);
+  async handleVerifiedPayment({ paymentId, txHash }: PaymentVerifiedEvent) {
+    await this.applyPayment(paymentId, txHash);
   }
 
-  async applyPayment(paymentId: string) {
-    const payment = await this.prismaService.client.payment.update({
-      where: { id: paymentId },
-      data: { status: 'VERIFIED' },
+  /**
+   * Settles a payment exactly once. The `status: 'PENDING'` predicate makes
+   * this a no-op for a payment that was already settled, so a duplicated or
+   * replayed transaction cannot re-emit an update.
+   */
+  async applyPayment(paymentId: string, txHash: string) {
+    const { count } = await this.prismaService.client.payment.updateMany({
+      where: { id: paymentId, status: 'PENDING' },
+      data: { status: 'VERIFIED', txHash },
     });
 
+    if (count === 0) {
+      this.logger.warn(
+        `Payment ${paymentId} was already settled; ignoring ${txHash}`,
+      );
+      return;
+    }
+
+    const payment = await this.prismaService.client.payment.findUniqueOrThrow({
+      where: { id: paymentId },
+    });
+
+    this.logger.log(`Payment ${paymentId} verified by ${txHash}`);
     this.paymentGateway.emitUpdate(paymentId, 'payment.updated', payment);
   }
 }

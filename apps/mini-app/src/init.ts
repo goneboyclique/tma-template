@@ -5,13 +5,24 @@ import {
   viewport,
   init as initSDK,
   mockTelegramEnv,
-  type ThemeParams,
   retrieveLaunchParams,
   emitEvent,
   miniApp,
   backButton,
 } from "@tma.js/sdk-vue";
 import { configureClient } from "@pkg/api/config";
+
+/**
+ * The SDK keeps theme params camelCased, but the `theme_changed` bridge
+ * event expects the raw snake_case keys Telegram sends.
+ */
+const toBridgeThemeParams = (params: Record<string, string | undefined>) =>
+  Object.fromEntries(
+    Object.entries(params).map(([key, value]) => [
+      key.replace(/[A-Z]/g, (char) => `_${char.toLowerCase()}`),
+      value,
+    ]),
+  ) as Record<string, `#${string}` | undefined>;
 
 /**
  * Initializes the application and configures its dependencies.
@@ -41,14 +52,15 @@ export async function init(options: {
     mockTelegramEnv({
       onEvent(event, next) {
         if (event.name === "web_app_request_theme") {
-          let tp: ThemeParams = {};
-          if (firstThemeSent) {
-            tp = themeParams.state();
-          } else {
-            firstThemeSent = true;
-            tp ||= retrieveLaunchParams().tgWebAppThemeParams;
-          }
-          return emitEvent("theme_changed", { theme_params: tp });
+          // The first request has no mounted state yet, so fall back to the
+          // theme Telegram passed in the launch params.
+          const theme_params = firstThemeSent
+            ? toBridgeThemeParams(themeParams.state())
+            : retrieveLaunchParams().tgWebAppThemeParams;
+
+          firstThemeSent = true;
+
+          return emitEvent("theme_changed", { theme_params });
         }
 
         if (event.name === "web_app_request_safe_area") {

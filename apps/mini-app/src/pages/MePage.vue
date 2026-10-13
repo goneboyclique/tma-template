@@ -37,7 +37,7 @@ const accountRows = computed<DisplayDataRow[]>(() => {
     { title: 'username', value: user.username || '-' },
     { title: 'name', value: user.first_name || '-' },
   ];
-  if (user.ton_address) rows.push({ title: 'ton address', value: toUserFriendlyAddress(user.ton_address) });
+  if (user.ton_wallet_address) rows.push({ title: 'ton address', value: toUserFriendlyAddress(user.ton_wallet_address) });
   return rows
 });
 

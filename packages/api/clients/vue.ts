@@ -21,64 +21,18 @@ import type {
 import { unref } from "vue";
 
 import { customFetch } from "../fetcher";
-export type UserFindUniqueReqDtoSelect = {
-  id?: boolean;
-  first_name?: boolean;
-  last_name?: boolean;
-  username?: boolean;
-  language_code?: boolean;
-  is_premium?: boolean;
-  added_to_attachment_menu?: boolean;
-  allows_write_to_pm?: boolean;
-  photo_url?: boolean;
-  created_at?: boolean;
-  updated_at?: boolean;
-  ton_wallet_address?: boolean;
-};
-
-export type UserFindUniqueReqDtoWhere = {
-  id?: string;
-  ton_wallet_address?: string;
-};
-
-export interface UserFindUniqueReqDto {
-  select?: UserFindUniqueReqDtoSelect;
-  where: UserFindUniqueReqDtoWhere;
-}
-
-export interface UserFindUniqueResDtoOutput {
-  id?: string;
-  first_name?: string;
-  /** @nullable */
-  last_name?: string | null;
-  /** @nullable */
-  photo_url?: string | null;
-  /** @nullable */
-  username?: string | null;
-  /** @nullable */
-  ton_wallet_address?: string | null;
-  /** @nullable */
-  is_premium?: boolean | null;
-}
-
 export interface UserMeResDtoOutput {
   id?: string;
   first_name?: string;
-  /** @nullable */
-  last_name?: string | null;
-  /** @nullable */
-  photo_url?: string | null;
-  /** @nullable */
-  username?: string | null;
-  /** @nullable */
-  ton_wallet_address?: string | null;
-  /** @nullable */
-  is_premium?: boolean | null;
+  last_name?: string[];
+  photo_url?: string[];
+  username?: string[];
+  ton_wallet_address?: string[];
+  is_premium?: boolean[];
 }
 
 export interface UserUpdateTonAccountAddressDto {
-  /** @nullable */
-  ton_wallet_address?: string | null;
+  ton_wallet_address?: string[];
 }
 
 export type PaymentCreateReqDtoCurrency =
@@ -90,8 +44,9 @@ export const PaymentCreateReqDtoCurrency = {
 } as const;
 
 export interface PaymentCreateReqDto {
-  amount: string;
   currency: PaymentCreateReqDtoCurrency;
+  /** @pattern ^[1-9][0-9]{0,38}$ */
+  amount: string;
 }
 
 export type PaymentCreateResDtoOutputCurrency =
@@ -104,12 +59,10 @@ export const PaymentCreateResDtoOutputCurrency = {
 
 export interface PaymentCreateResDtoOutput {
   id: string;
-  payload: string;
   to: string;
-  currency: PaymentCreateResDtoOutputCurrency;
   amount: string;
-  /** @nullable */
-  jettonMaster?: string | null;
+  payload: string;
+  currency: PaymentCreateResDtoOutputCurrency;
 }
 
 type AwaitedInput<T> = PromiseLike<T> | T;
@@ -117,108 +70,6 @@ type AwaitedInput<T> = PromiseLike<T> | T;
 type Awaited<O> = O extends AwaitedInput<infer T> ? T : never;
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
-
-export type userControllerFindUniqueResponseDefault = {
-  data: UserFindUniqueResDtoOutput;
-  status: number;
-};
-
-export type userControllerFindUniqueResponseError =
-  userControllerFindUniqueResponseDefault & {
-    headers: Headers;
-  };
-
-export type userControllerFindUniqueResponse =
-  userControllerFindUniqueResponseError;
-
-export const getUserControllerFindUniqueUrl = () => {
-  return `/user/find-unique`;
-};
-
-export const userControllerFindUnique = async (
-  userFindUniqueReqDto: UserFindUniqueReqDto,
-  options?: RequestInit,
-): Promise<userControllerFindUniqueResponse> => {
-  return customFetch<userControllerFindUniqueResponse>(
-    getUserControllerFindUniqueUrl(),
-    {
-      ...options,
-      method: "POST",
-      headers: { "Content-Type": "application/json", ...options?.headers },
-      body: JSON.stringify(userFindUniqueReqDto),
-    },
-  );
-};
-
-export const getUserControllerFindUniqueMutationOptions = <
-  TError = UserFindUniqueResDtoOutput,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof userControllerFindUnique>>,
-    TError,
-    { data: UserFindUniqueReqDto },
-    TContext
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof userControllerFindUnique>>,
-  TError,
-  { data: UserFindUniqueReqDto },
-  TContext
-> => {
-  const mutationKey = ["userControllerFindUnique"];
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation &&
-      "mutationKey" in options.mutation &&
-      options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined };
-
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof userControllerFindUnique>>,
-    { data: UserFindUniqueReqDto }
-  > = (props) => {
-    const { data } = props ?? {};
-
-    return userControllerFindUnique(data, requestOptions);
-  };
-
-  return { mutationFn, ...mutationOptions };
-};
-
-export type UserControllerFindUniqueMutationResult = NonNullable<
-  Awaited<ReturnType<typeof userControllerFindUnique>>
->;
-export type UserControllerFindUniqueMutationBody = UserFindUniqueReqDto;
-export type UserControllerFindUniqueMutationError = UserFindUniqueResDtoOutput;
-
-export const useUserControllerFindUnique = <
-  TError = UserFindUniqueResDtoOutput,
-  TContext = unknown,
->(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof userControllerFindUnique>>,
-      TError,
-      { data: UserFindUniqueReqDto },
-      TContext
-    >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-  queryClient?: QueryClient,
-): UseMutationReturnType<
-  Awaited<ReturnType<typeof userControllerFindUnique>>,
-  TError,
-  { data: UserFindUniqueReqDto },
-  TContext
-> => {
-  return useMutation(
-    getUserControllerFindUniqueMutationOptions(options),
-    queryClient,
-  );
-};
 
 export type userControllerFindMeResponseDefault = {
   data: UserMeResDtoOutput;

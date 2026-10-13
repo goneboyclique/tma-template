@@ -1,24 +1,29 @@
 # ton-payment
 
-Telegram Mini App that accepts TON / USDT (jetton) payments.
+Self-hostable payment service for TON and USDT (jetton) payments: create a
+payment, have the payer sign it with any TON Connect wallet, and get a
+verified result once the transfer lands on-chain.
+
+The product is the API; `apps/mini-app` is a Telegram Mini App kept only as a
+test client for exercising a real wallet end to end.
 
 pnpm + Turborepo monorepo:
 
-| path              | package        | what it is                                                            |
-| ----------------- | -------------- | --------------------------------------------------------------------- |
-| `apps/api`        | `api`          | NestJS REST API (Prisma/PostgreSQL, Redis cache, TON Center, Swagger) |
-| `apps/mini-app`   | `tma`          | Vue 3 + Vite Telegram Mini App (TON Connect, TanStack Query)          |
-| `packages/db`     | `@pkg/db`      | Prisma schema/client + generated Zod schemas                          |
-| `packages/api`    | `@pkg/api`     | orval-generated API client (fetch / vue-query / react-query)          |
-| `packages/shared` | `@pkg/shared`  | shared utilities (tsup, ESM + CJS)                                    |
-| `packages/madevs` | `@repo/madevs` | dev helper: opens a public tunnel to the API and runs `turbo dev`     |
-| `tooling/*`       | `@tooling/*`   | shared env loaders (zod), ESLint config, tsconfig bases               |
+| path              | package        | what it is                                                        |
+| ----------------- | -------------- | ----------------------------------------------------------------- |
+| `apps/api`        | `api`          | NestJS REST API (Prisma/PostgreSQL, TON Center, Swagger)          |
+| `apps/mini-app`   | `tma`          | Vue 3 + Vite Telegram Mini App (TON Connect, TanStack Query)      |
+| `packages/db`     | `@pkg/db`      | Prisma schema/client + generated Zod schemas                      |
+| `packages/api`    | `@pkg/api`     | orval-generated API client (fetch / vue-query)                    |
+| `packages/shared` | `@pkg/shared`  | shared utilities (tsup, ESM + CJS)                                |
+| `packages/madevs` | `@repo/madevs` | dev helper: opens a public tunnel to the API and runs `turbo dev` |
+| `tooling/*`       | `@tooling/*`   | shared env loaders (zod), ESLint config, tsconfig bases           |
 
 ## Prerequisites
 
 - Node.js 24+ (the Docker image uses Node 26)
 - pnpm (`packageManager` is pinned in `package.json`; use `corepack enable`)
-- Docker + Docker Compose (PostgreSQL 17 and Redis 7 for local dev, and for deploy)
+- Docker + Docker Compose (PostgreSQL 17 for local dev, and for deploy)
 - A Telegram bot token ([@BotFather](https://t.me/BotFather)) and a [TON Center](https://toncenter.com) API key
 
 ## Setup
@@ -66,8 +71,6 @@ API variables (validated with zod at boot; the process exits if a required one i
 | `TONCENTER_WS_URL`   | no       | `wss://testnet.toncenter.com/api/streaming/v2/ws` |
 | `PORT`               | no       | `4000`                                            |
 | `NODE_ENV`           | no       | `development`                                     |
-| `REDIS_URL`          | no       | `redis://localhost:6379`                          |
-| `CACHE_TTL`          | no       | `60000` (ms)                                      |
 | `CORS_ORIGINS`       | no       | `*`                                               |
 
 Mini App (Vite, read from the root `.env`):
@@ -79,13 +82,10 @@ Mini App (Vite, read from the root `.env`):
 
 Tooling only: `OPENAPI_INPUT_SRC` (orval input, default `http://localhost:4000/api-json`).
 
-> `POSTGRES_PORT` in `.env.example` is `5433` while the example `DATABASE_URL`s use
-> `5432`. For host tooling to reach the compose database, make the two match.
-
 ### Start local infrastructure
 
 ```sh
-docker compose up postgres redis --detach
+docker compose up postgres --detach
 ```
 
 ### Database
@@ -125,8 +125,12 @@ pnpm --filter tma dev
 With the API running (needs `OPENAPI_INPUT_SRC`, see `packages/api/.env`):
 
 ```sh
-pnpm sdk:generate   # regenerates packages/api/clients/{core,vue,react}.ts, then formats
+pnpm sdk:generate   # regenerates packages/api/clients/{core,vue}.ts, then formats
 ```
+
+> The committed clients are **out of date**: they still describe the previous
+> payment-create response and a removed `user/find-unique` endpoint. Start the
+> API and re-run the command above to refresh them.
 
 ## Test and lint
 
@@ -135,6 +139,10 @@ pnpm lint
 pnpm test                                          # vitest (turbo builds deps first)
 pnpm --filter api exec vitest run path/to/file.spec.ts   # single test file
 ```
+
+Tests currently cover the on-chain verification path: TON/jetton cell
+encode-decode and `TonTransactionService.verify`, including the case where a
+worthless jetton tries to settle a payment. They need no database or network.
 
 ## Build
 
@@ -161,32 +169,21 @@ Then deploy on the server with the compose stack (root `.env` is the only file t
 
 ```sh
 cp .env.example .env    # set POSTGRES_PASSWORD, CORS_ORIGINS, secrets below
-API_IMAGE=ton-payment-api:latest docker compose up --detach   # no --build, see note
+docker compose up --detach --build
 ```
 
 Stack (`docker-compose.yaml`):
 
-- `postgres` / `redis` — published on `127.0.0.1` only. Put a reverse proxy in
-  front of `api` for TLS.
+- `postgres` — published on `127.0.0.1` only. Put a reverse proxy in front of
+  `api` for TLS.
 - `migrate` — one-shot `prisma migrate deploy`; `api` starts only after it
   exits successfully.
 - `api` — configured explicitly from compose (no `env_file`); port `API_PORT`
   (default 4000); healthcheck on `/api-json`.
 
-Missing required variables abort `docker compose` by name before anything starts.
-
-Known gaps in the current deploy setup:
-
-- The `api` service in `docker-compose.yaml` does **not** yet pass
-  `TELEGRAM_BOT_TOKEN`, `PAYMENT_WALLET`, `TONCENTER_API_KEY`,
-  `USDT_JETTON_MASTER`, `TONCENTER_API_URL`, `TONCENTER_WS_URL`. The API will
-  exit at boot on env validation until they are added to its `environment:`
-  block (they are already present in `.env.example`).
-- `build.context` in `docker-compose.yaml` is `./out`, left over from the removed
-  `scripts/build-and-push.sh`, so `docker compose build` / `up --build` does not
-  work against the committed `Dockerfile`. Build the image manually as above
-  and pass `API_IMAGE` (or fix the build block). `apps/api/Dockerfile.new` is a
-  single-stage variant for a pre-built tree and is not used by anything today.
+Missing required variables abort `docker compose` by name before anything starts:
+the `api` service passes every variable the env schema requires, and the schema
+is validated at boot.
 
 Useful commands:
 
@@ -199,17 +196,19 @@ docker compose down -v              # WARNING: deletes the postgres volume
 
 ### Standalone customer deployment
 
-`docker-compose.customer.yml` is a self-contained stack (own PostgreSQL, no Redis,
-no `.env`), pulling `ghcr.io/clayzenx/ton-payment-api` (override with `API_IMAGE`):
+`docker-compose.customer.yml` is a self-contained stack (own PostgreSQL, no `.env`),
+pulling `ghcr.io/clayzenx/ton-payment-api` (override with `API_IMAGE`):
 
 ```sh
 docker compose -f docker-compose.customer.yml up -d
 ```
 
-All values are inlined and must be edited before use (DB password,
-`CORS_ORIGINS`, `TELEGRAM_BOT_TOKEN`, `PAYMENT_WALLET`, `TONCENTER_API_KEY`,
-`USDT_JETTON_MASTER`). **The committed file currently contains real-looking
-secrets (bot token, TON Center key) — rotate them and replace with placeholders.**
+All values are inlined as `CHANGE_ME` placeholders and must be edited before use
+(DB password, `CORS_ORIGINS`, `TELEGRAM_BOT_TOKEN`, `PAYMENT_WALLET`,
+`TONCENTER_API_KEY`, `USDT_JETTON_MASTER`).
+
+> Earlier revisions of this file committed a real bot token and TON Center API
+> key. They are still in git history — rotate both.
 
 ### Mini App
 

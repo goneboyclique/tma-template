@@ -49,10 +49,3 @@ export interface BuildJettonTransferBodyParams {
   forwardComment: string;
   queryId?: bigint;
 }
-
-export interface JettonTransferNotification {
-  queryId: bigint;
-  amount: bigint;
-  sender: Address;
-  forwardComment?: string;
-}

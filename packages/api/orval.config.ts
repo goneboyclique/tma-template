@@ -26,21 +26,6 @@ export default {
     },
   },
 
-  apiReact: {
-    input,
-    output: {
-      target: "./clients/react.ts",
-      client: "react-query",
-      mode: "single",
-      override: {
-        mutator: {
-          path: "./fetcher.ts",
-          name: "customFetch",
-        },
-      },
-    },
-  },
-
   apiCore: {
     input,
     output: {

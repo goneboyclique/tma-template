@@ -22,14 +22,14 @@ Deployment model today is **one stack per customer**: each deployment owns a sin
 
 Product:
 
-- `apps/api` (`api`) — NestJS 12 REST API + socket.io gateway. PostgreSQL via Prisma, Redis cache, TON Center HTTP + WebSocket, `@nestjs/observe` instrumentation. Swagger UI at `/api`, OpenAPI JSON at `/api-json`.
+- `apps/api` (`api`) — NestJS 12 REST API + socket.io gateway. PostgreSQL via Prisma, TON Center HTTP + WebSocket. Swagger UI at `/api`, OpenAPI JSON at `/api-json`. No cache layer and no third-party instrumentation: a merchant who wants either adds it in their own deployment.
 - `packages/db` (`@pkg/db`) — Prisma 7 schema/client (`@prisma/adapter-pg`) + generated Zod schemas (`prisma-zod-generator`, `pureModels`, single file). Source of truth for the payment model.
-- `packages/api` (`@pkg/api`) — the integrator-facing SDK: orval-generated clients (`clients/{core,vue,react}.ts`, generated — do not hand-edit) over `fetcher.ts` (`customFetch`, `configureClient`, default `baseUrl` `/api`).
+- `packages/api` (`@pkg/api`) — the integrator-facing SDK: orval-generated clients (`clients/core.ts` for backends, `clients/vue.ts` for the test client — generated, do not hand-edit) over `fetcher.ts` (`customFetch`, `configureClient`, default `baseUrl` `/api`).
 - `tooling/env` — zod env loaders / runtime config contract: `@tooling/env/server`, `@tooling/env/tma`, `@tooling/env/vite`.
 
 Supporting:
 
-- `packages/shared` (`@pkg/shared`) — shared utilities (tsup, ESM + CJS).
+- `packages/shared` (`@pkg/shared`) — shared utilities (tsup, ESM + CJS). Currently imported by nothing; a deletion candidate.
 - `packages/madevs` (`@repo/madevs`) — `start:tg-dev`: untun tunnel to `:4000`, injects `VITE_API_URL`, runs `turbo dev`. Test-harness tooling only.
 - `tooling/eslint` (`@tooling/eslint/base`), `tooling/typescript` (`base.json`, `node.json`, `browser.json`).
 
@@ -41,11 +41,11 @@ Test surface:
 
 - Do **not** start the dev server (`pnpm dev`, `pnpm start:tg-dev`, `nest start`, `vite`) — user preference. Builds, type-checks and lint are fine.
 - Never commit unless asked. Never print or commit secrets from `.env` files.
-- `docker-compose.customer.yml` contains real-looking inlined secrets (Telegram bot token, TON Center API key). Do not copy them anywhere; recommend rotating them.
+- The secrets once inlined in `docker-compose.customer.yml` are now `CHANGE_ME` placeholders, but the old bot token and TON Center key remain in git history and must be treated as compromised until rotated.
 - Treat API responses as a published contract: changing a response DTO means regenerating `packages/api/clients/*` and noting the break, not silently reshaping a payload.
 - Generated code is off-limits for manual edits: `packages/db/generated/zod/schemas.ts` (`pnpm db:generate`) and `packages/api/clients/*.ts` (`pnpm sdk:generate`).
 - Money is handled as **strings in the smallest unit** (nanotons / jetton base units). Never convert to `number`; use `BigInt` when arithmetic is needed.
-- The mini-app currently fails type-check (see "Known bugs"). Do not treat that as a regression you caused, and do not block API work on fixing it.
+- Never weaken `TonTransactionService.verify`. Its checks (destination, exact amount, and for jettons the notification's **source** address) are what stop a worthless token from settling a payment. `ton-transaction.service.spec.ts` covers this; keep it passing.
 - Package filter names: `api`, `tma`, `@pkg/db`, `@pkg/api`, `@pkg/shared`, `@repo/madevs`.
 
 ## Commands
@@ -60,7 +60,7 @@ pnpm test             # turbo test (vitest; depends on ^build)
 pnpm format           # prettier --write "**/*.{ts,tsx,md,json}"
 ```
 
-**Database** (needs `packages/db/.env` with `DATABASE_URL` and a reachable Postgres; `docker compose up postgres redis --detach` is enough for local work):
+**Database** (needs `packages/db/.env` with `DATABASE_URL` and a reachable Postgres; `docker compose up postgres --detach` is enough for local work):
 
 ```bash
 pnpm db:generate      # prisma generate (Prisma client + Zod schemas in packages/db/generated)
@@ -71,19 +71,22 @@ pnpm db:deploy        # prisma migrate deploy (prod)
 **Per-package**:
 
 ```bash
-pnpm --filter api build            # nest build -> apps/api/dist   (currently clean)
+pnpm --filter api build            # nest build -> apps/api/dist
 pnpm --filter api start:prod       # node dist/main
-pnpm --filter api lint
-pnpm --filter tma type-check       # vue-tsc (test client; currently failing)
+pnpm --filter api lint             # eslint --fix over src/**/*.ts
+pnpm --filter tma type-check       # vue-tsc (test client)
 ```
 
-**Tests** — vitest, node environment, globals on:
+Build, lint, tests and the mini-app type-check are all green; treat a failure in any of them as something you introduced.
+
+**Tests** — vitest, node environment, globals on. `vitest.config.ts` supplies throwaway env vars (the env schemas parse at import time) and the `src/...` path alias:
 
 ```bash
-pnpm --filter api exec vitest run src/payments/payments.service.spec.ts
+pnpm --filter api exec vitest run
+pnpm --filter api exec vitest run src/common/utils/ton.utils.spec.ts
 ```
 
-There are currently **no test files anywhere in the repo**. The verification logic (`TonTransactionService.verify`, `ton.utils.ts` cell encode/decode, `TonService.buildPayment`) is pure and the highest-value place to add the first unit tests — no chain access required, feed it fixture messages.
+Coverage is currently the verification path only: `ton.utils.spec.ts` (cell encode/decode) and `ton-transaction.service.spec.ts` (`verify`, including the fake-jetton rejection). Both are pure — no chain, no database.
 
 **SDK generation** — requires a running API serving `OPENAPI_INPUT_SRC`, so an agent cannot run it under the no-dev-server rule; ask the user to start the API, then:
 
@@ -93,7 +96,7 @@ pnpm sdk:generate     # orval -> packages/api/clients/*, then prettier
 
 ## Configuration
 
-Config *is* the merchant setup: the receiving wallet, the jetton master, the TON Center credentials and the bot token that authenticates callers all come from env.
+Config _is_ the merchant setup: the receiving wallet, the jetton master, the TON Center credentials and the bot token that authenticates callers all come from env.
 
 Where env files live and who reads them:
 
@@ -113,19 +116,15 @@ The API env schema is `tmaApiEnvSchema` in `tooling/env/src/tma-api.ts` (importe
 | `TONCENTER_API_KEY`  | yes      | —                                                 |
 | `PAYMENT_WALLET`     | yes      | — the deployment's receiving wallet               |
 | `USDT_JETTON_MASTER` | yes      | — jetton master for USDT on the target network    |
-| `OBSERVE_APP_KEY`    | yes      | —                                                 |
-| `OBSERVE_APP_SECRET` | yes      | —                                                 |
 | `TONCENTER_API_URL`  | no       | `https://testnet.toncenter.com/api/v2/jsonRPC`    |
 | `TONCENTER_WS_URL`   | no       | `wss://testnet.toncenter.com/api/streaming/v2/ws` |
 | `PORT`               | no       | `4000`                                            |
 | `NODE_ENV`           | no       | `development`                                     |
-| `REDIS_URL`          | no       | `redis://localhost:6379`                          |
-| `CACHE_TTL`          | no       | `60000` (ms)                                      |
 | `CORS_ORIGINS`       | no       | `*` (comma-separated list)                        |
 
 Testnet vs mainnet is purely `TONCENTER_API_URL` + `TONCENTER_WS_URL` + `USDT_JETTON_MASTER`; defaults are **testnet**.
 
-`tooling/env/src/server.ts` (`@tooling/env/server`) is the **minimal** base schema (`DATABASE_URL`, `PORT`, `NODE_ENV`, `REDIS_URL`, `CACHE_TTL`, `CORS_ORIGINS`). App-only secrets must **not** go into it: `packages/db/prisma.config.ts` and `packages/db/src/client.ts` import it, so every prisma CLI command would start requiring them. Add service variables to `tma-api.ts` instead.
+`tooling/env/src/server.ts` (`@tooling/env/server`) is the **minimal** base schema (`DATABASE_URL`, `PORT`, `NODE_ENV`, `CORS_ORIGINS`). App-only secrets must **not** go into it: `packages/db/prisma.config.ts` and `packages/db/src/client.ts` import it, so every prisma CLI command would start requiring them. Add service variables to `tma-api.ts` instead.
 
 When adding a new runtime variable: add it to `tma-api.ts`, to the `api` service `environment:` block in `docker-compose.yaml`, to `docker-compose.customer.yml`, and to `.env.example`.
 
@@ -137,9 +136,15 @@ When adding a new runtime variable: add it to `tma-api.ts`, to the `api` service
 2. **Build the on-chain message.** `TonService.buildPayment` returns an unsigned TON Connect message:
    - `TON`: `to = payment.to`, `amount = payment.amount`, `payload = comment(payment.id)`.
    - Jetton: resolves the **sender's** jetton wallet via `JettonMaster.getWalletAddress`, builds a TEP-74 `transfer` body (`buildJettonTransferBody`) whose forwarded comment is `payment.id`, forwards `JETTON_FORWARD_TON_AMOUNT` (1 nanoton, so the receiving jetton wallet emits `transfer_notification`), and sets `amount = JETTON_TRANSFER_GAS_AMOUNT` (0.05 TON of gas, **not** the jetton amount).
-3. **Watch.** `TonStreamService` holds a TON Center WebSocket subscription (`min_finality: finalized`, ping every 15 s, reconnect after 2 s) over `TonService.getSupportedWallets()` — the payment wallet plus its jetton wallets, resolved once at subscribe time — and re-emits incoming `transactions` messages as the in-process `transaction` event (`EventEmitter2`).
-4. **Match and verify.** `TonTransactionService` (`@OnEvent('transaction')`) prefers a jetton `transfer_notification` (opcode `0x7362d09c`) and otherwise falls back to a plain TON text comment, decodes the payment id from it, loads the row, and `verify()`s that the transaction destination equals `payment.to` and the amount matches exactly (jetton amount for jettons, `in_msg.value` for TON). On success it emits `payment.verified`.
-5. **Settle and notify.** `PaymentsService` (`@OnEvent('payment.verified')`) sets `status: VERIFIED` and pushes the row to the payment's socket.io room via `PaymentGateway.emitUpdate(paymentId, 'payment.updated', payment)`.
+3. **Watch.** `TonStreamService` holds a TON Center WebSocket subscription (`min_finality: finalized`, ping every 15 s, exponential reconnect backoff from 2 s to 60 s) over `TonService.getSupportedWallets()` — the payment wallet plus its jetton wallets — and re-emits incoming `transactions` messages as the in-process `transaction` event (`EventEmitter2`). A failing subscription closes the socket so the backoff retries it; `isSubscribed()` reports whether verification is currently possible at all.
+4. **Match and verify.** `TonTransactionService` (`@OnEvent('transaction')`) walks **every** transaction in the message. For each it reads the payment id from a jetton `transfer_notification` (opcode `0x7362d09c`) or a plain TON text comment, loads the row, skips it unless it is still `PENDING`, and `verify()`s it:
+   - destination must equal `payment.to`;
+   - for TON, `in_msg.value` must equal `payment.amount` exactly;
+   - for jettons, the notification's **source** must be the payment wallet's own jetton wallet for `payment.jettonMaster` (resolved once and cached in `TonService`), and the decoded jetton amount must match. Without the source check any minted token could settle a payment.
+
+   On success it emits `payment.verified` with `{ paymentId, txHash }`.
+
+5. **Settle and notify.** `PaymentsService` (`@OnEvent('payment.verified')`) flips the row to `VERIFIED` and records `txHash` with a conditional `updateMany` on `status: 'PENDING'`, so a replayed transaction settles nothing and emits nothing. On a real transition it pushes the row to the payment's socket.io room via `PaymentGateway.emitUpdate`.
 
 Everything between steps 3 and 5 is in-process via `EventEmitter2` — there is no queue, so events are lost on restart and there is no replay/backfill path (see "Product gaps").
 
@@ -149,10 +154,11 @@ TON opcodes and amount constants live in `apps/api/src/common/constants/ton.cons
 
 HTTP (all responses wrapped, see envelope below):
 
-- `POST /payments/create` — body `{ amount, currency }`, returns the payment plus the TON Connect message fields. Auth: `TelegramAuthGuard`.
+- `POST /payments/create` — body `{ amount, currency }` where `amount` is a positive integer string in the smallest unit. Returns the unsigned wallet message `{ id, to, amount, payload, currency }`. Auth: `TelegramAuthGuard`.
 - `GET /user/me` — upserts and returns the caller. Auth: `TelegramAuthGuard`.
 - `POST /user/update-ton-account-address` — records the payer's wallet, a precondition for creating a payment. Auth: `TelegramAuthGuard`.
-- `POST /user/find-unique` — Prisma-shaped lookup (`where`/`select`). **Unauthenticated.**
+
+Every route is authenticated. The old unauthenticated `POST /user/find-unique`, which accepted an arbitrary Prisma `where`/`select`, has been removed — do not reintroduce a route that forwards caller-supplied query shapes to Prisma.
 
 socket.io, namespace `payments`:
 
@@ -170,11 +176,11 @@ Authentication is `TelegramAuthGuard` (`common/guards/telegram-auth.guard.ts`): 
 { success: false, error: string } // 4xx/5xx
 ```
 
-`HttpResponseSchema` in `apps/api/src/common/schemas/http.response.schema.ts` produces the matching discriminated union for client-side typing. WebSocket payloads are **not** wrapped.
+The `HttpResponse<T>` type in `apps/api/src/common/schemas/http.response.schema.ts` expresses that union for client-side typing. WebSocket payloads are **not** wrapped.
 
 ### Data model (`packages/db/prisma/schema.prisma`)
 
-- `Payment` — `id` (uuid, the on-chain correlation key), `status` (`PaymentStatus`: `PENDING` | `CONFIRMED` | `VERIFIED` | `FAILED`, default `PENDING`), `txHash?`, `to`, `currency` (`Currency`: `TON` | `USDT`), `amount` (string, smallest unit), `jettonMaster?`, `createdAt`, `updatedAt`. Note there is **no payer/user/order reference and no expiry**.
+- `Payment` — `id` (uuid, the on-chain correlation key), `status` (`PaymentStatus`: `PENDING` | `CONFIRMED` | `VERIFIED` | `FAILED`, default `PENDING`), `txHash?` (written on settlement), `to`, `currency` (`Currency`: `TON` | `USDT`), `amount` (string, smallest unit), `jettonMaster?`, `createdAt`, `updatedAt`. Only `PENDING` and `VERIFIED` are ever set today. Note there is **no payer/user/order reference and no expiry**.
 - `User` — Telegram user fields, `id` is the Telegram id (string), optional unique `ton_wallet_address`. This is the payer record used by the test client, not a merchant account.
 
 Migrations live in `packages/db/prisma/migrations`. After editing the schema run `pnpm db:migrate`, then `pnpm db:generate`.
@@ -189,11 +195,11 @@ DTOs derive from the generated Zod schemas via `createZodDto` (`nestjs-zod`):
 4. Build DTOs with `createZodDto(SomeSchema.pick/omit(...))` and annotate handlers with `@ZodResponse({ type: ResDto })`
 5. `pnpm sdk:generate` so `packages/api/clients/*` match the new OpenAPI document
 
-`@ZodResponse` serializes against the DTO schema, so any field a service returns that the schema does not declare is **dropped at runtime**. Because the payment-create response is not a plain DB row (it carries the TON Connect `payload`), its DTO has to be an explicit schema rather than a slice of `PaymentSchema` — this is currently wrong, see "Known bugs".
+`@ZodResponse` serializes against the DTO schema, so any field a service returns that the schema does not declare is **dropped at runtime**. That is why `PaymentCreateResDto` is an explicit `z.object` rather than a slice of `PaymentSchema`: the response is a wallet message carrying a derived `payload`, not a DB row. Keep it that way.
 
-### Cache layer
+### No caching, no vendor instrumentation
 
-`CacheModule` (global) provides `CACHE_CLIENT`, a two-layer `cacheable` cache: in-memory LRU (5 s TTL, 5000 entries) + Redis (`REDIS_URL`, TTL `CACHE_TTL`). `QueryCacheInterceptor` keys on route path + a stable hash of the Prisma-shaped body fields (`where`, `select`, `include`, `orderBy`, `take`, `skip`) and ignores every other body field. It is registered **globally** as `APP_INTERCEPTOR` in `AppModule` and additionally applied on `POST /user/find-unique` — which is a correctness problem for payment routes, see "Known bugs".
+There is deliberately **no cache layer and no APM**. A Redis-backed query cache used to wrap every route and would hand one caller another caller's payment or profile; it was removed along with `@nestjs/observe`, whose credentials were required at boot and blocked self-hosting. Reads go straight to Postgres. If a deployment needs caching, rate limiting or tracing, it belongs in that merchant's own stack (or behind their reverse proxy) — do not reintroduce either into the service without a concrete, measured reason, and never cache a payment route.
 
 ### Test client (`apps/mini-app`)
 
@@ -204,33 +210,27 @@ Only relevant when you need a real wallet signature end to end. Vite `base` is `
 Structural things a payment service needs that this codebase does not have yet. Treat these as the roadmap, not as bugs to fix incidentally:
 
 - **No tenancy.** One `PAYMENT_WALLET` per deployment, no merchant/account model, no per-merchant keys. Multi-tenant support means a merchant table, per-merchant wallets, and subscribing the stream to many addresses.
-- **No server-to-server auth.** Every write route is behind Telegram init data, so a non-Telegram integrator cannot call the API. `POST /user/find-unique` is additionally unauthenticated and accepts arbitrary `where`/`select`.
+- **No server-to-server auth.** Every route is behind Telegram init data, so a non-Telegram integrator cannot call the API at all. API keys / HMAC signing is the missing piece.
 - **No webhooks.** Verification results are only pushed over socket.io to a connected client; a backend integrator has no durable callback (no signed webhook, no delivery retries, no polling endpoint — there is no `GET /payments/:id`).
 - **No idempotency.** `POST /payments/create` always inserts a new row; there is no client-supplied idempotency key and no dedupe on a merchant order id.
 - **No payment expiry or reconciliation.** Rows stay `PENDING` forever; `validUntil` lives only in the mini-app's TON Connect call. Missed WebSocket events are never recovered — there is no polling/backfill against TON Center, and `EventEmitter2` events are dropped on restart or if the handler throws.
-- **Unused lifecycle fields.** `CONFIRMED` and `FAILED` are never set and `txHash` is never written, even though the matched transaction hash is available in `TonTransactionService`.
-- **Exact-amount-only matching.** `verify()` requires an exact string equality on the amount: overpayment, underpayment and partial payments are all silently ignored rather than recorded. There is also no guard against a replayed/duplicate transaction re-verifying a payment.
+- **Unused lifecycle states.** `CONFIRMED` and `FAILED` are never set; a payment is either `PENDING` or `VERIFIED`.
+- **Exact-amount-only matching.** `verify()` requires exact string equality on the amount: overpayment, underpayment and partial payments are all rejected and logged rather than recorded as such.
+- **Caller-defined amount.** The payer's request decides the price. A real integration needs merchant-defined invoices; the DTO only guarantees the amount is a positive integer.
 - **No audit trail.** No record of observed transactions, only the mutated `Payment` row.
 
-## Known bugs
+## Known issues
 
-Verified against the current tree:
-
-- **Payment-create response contract is broken.** `PaymentCreateResDto` is `PaymentSchema` minus timestamps, so it declares `status`/`txHash` and **no `payload`**, while `TonService.buildPayment` returns `{ id, to, payload, amount, currency }`. `@ZodResponse` therefore strips the `payload` the caller needs to sign, and the generated SDK is stale on top of that (`packages/api/clients/*` still type the old `{ id, payload, to, currency, amount, jettonMaster }`). Fix by giving the endpoint its own response schema that models the TON Connect message, then regenerating the SDK.
-- **Global response caching on payment routes.** `QueryCacheInterceptor` is registered as `APP_INTERCEPTOR`, so it caches every route, and for bodies without Prisma fields the key collapses to the empty-body hash. `POST /payments/create` can therefore return a previously created payment, and `GET /user/me` can return another caller's profile, for up to the cache TTL. Scope the interceptor to the routes that opt in.
-- **CORS is not applied to HTTP.** `setupCors` (`common/utils/cors.utils.ts`) is never called from `main.ts`; `CORS_ORIGINS` currently only affects the socket.io gateway.
-- **Unvalidated env read.** `common/constants/ton.constants.ts` reads `USDT_JETTON_MASTER` straight off `process.env` instead of the validated `@tooling/env/tma` object, so it silently yields `undefined` rather than failing at boot.
-- **Compose env drift.** `docker-compose.yaml`'s `api.environment` is missing `TELEGRAM_BOT_TOKEN`, `PAYMENT_WALLET`, `TONCENTER_API_KEY`, `USDT_JETTON_MASTER`, `TONCENTER_API_URL`, `TONCENTER_WS_URL`, `OBSERVE_APP_KEY`, `OBSERVE_APP_SECRET`; `docker-compose.customer.yml` is missing the two `OBSERVE_*` vars. The API fails env validation at boot without them.
-- `.env.example` sets `POSTGRES_PORT=5433` while the host `DATABASE_URL` examples use `5432`.
-- Test client only: `pnpm --filter tma type-check` fails with 6 errors (`src/pages/MePage.vue:40` uses `ton_address` instead of `ton_wallet_address`; `src/init.ts` lines 44–51 have `ThemeParams` mismatches), and `usePayment.stopTracking` emits `payment.unsubscribe` with `{ orderId }` while the gateway reads `data.paymentId`. `pnpm --filter api build` is clean.
+- **The generated SDK is stale.** `packages/api/clients/*` still describe the old payment-create response (`{ id, payload, to, currency, amount, jettonMaster }`) and still expose `userControllerFindUnique`, an endpoint that no longer exists. Regenerating needs a running API (`pnpm sdk:generate`), which an agent cannot start — ask the user.
+- **Secrets in git history.** The Telegram bot token and TON Center API key previously inlined in `docker-compose.customer.yml` are still recoverable from history. Rotate both.
+- **`packages/shared` is unused.** Nothing imports it; it survives only as a workspace package.
 
 ## Docker and deploy
 
-- `docker-compose.customer.yml` — **the customer-facing artifact**: standalone stack with its own Postgres on an isolated network, no Redis (the API falls back to the in-memory layer and logs Redis connection errors), all values inlined and marked "CHANGE ME", pulls `ghcr.io/clayzenx/ton-payment-api`. A one-shot `migrate` service runs `prisma migrate deploy` before the API starts.
-- `docker-compose.yaml` — the development/reference stack: `postgres:17`, `redis:7-alpine` (both published on `127.0.0.1` only), one-shot `migrate`, and `api` (waits for healthy DB/Redis plus completed migrate; healthcheck hits `/api-json`). Its `build.context: ./out` expects the pre-built tree produced by the removed `scripts/build-and-push.sh` — the stale `out/` directory in the repo root is that leftover. Build the image manually and pass `API_IMAGE`. Local dev only needs `docker compose up postgres redis --detach`.
+- `docker-compose.customer.yml` — **the customer-facing artifact**: standalone stack with its own Postgres on an isolated network, all values inlined and marked "CHANGE ME", pulls `ghcr.io/clayzenx/ton-payment-api`. A one-shot `migrate` service runs `prisma migrate deploy` before the API starts. Two containers total: Postgres and the API.
+- `docker-compose.yaml` — the development/reference stack: `postgres:17` (published on `127.0.0.1` only), one-shot `migrate`, and `api` (waits for a healthy DB plus completed migrate; healthcheck hits `/api-json`). It passes every required API variable explicitly and aborts by name when one is missing. `docker compose build` works: the build context is the repo root with `apps/api/Dockerfile`. Local dev only needs `docker compose up postgres --detach`.
 - `apps/api/Dockerfile` — multi-stage: `turbo prune api --docker` → `pnpm install` → `pnpm turbo build` → slim runtime (non-root `nestjs` user, `openssl` for Prisma), `CMD node apps/api/dist/main.js`. Build context must be the **repo root**: `docker build -f apps/api/Dockerfile -t ton-payment-api:latest .`. It installs its own pnpm version (may differ from `packageManager`) and uses a throwaway build-time `DATABASE_URL`.
-- `apps/api/Dockerfile.new` — unused single-stage variant for a pre-built tree.
-- There is no CI config in the repo. The service must reach TON Center over both HTTPS and WSS; losing the WebSocket means payments stop being verified, and nothing retries them after reconnect.
+- There is no CI config in the repo. The service must reach TON Center over both HTTPS and WSS; losing the WebSocket means payments stop being verified, and nothing retries the ones missed while it was down.
 
 ## Commit conventions
 

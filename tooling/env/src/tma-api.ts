@@ -13,8 +13,6 @@ export const tmaApiEnvSchema = z.object({
     .enum(["development", "test", "production"])
     .default("development"),
 
-  REDIS_URL: z.string().default("redis://localhost:6379"),
-  CACHE_TTL: z.coerce.number().default(60000),
   CORS_ORIGINS: z.string().default("*"),
 
   // tma specific variables
@@ -30,9 +28,6 @@ export const tmaApiEnvSchema = z.object({
   // Jetton master contract address for USDT on TON, used to resolve
   // per-user jetton wallets and to validate incoming jetton transfers.
   USDT_JETTON_MASTER: z.string().min(1),
-
-  OBSERVE_APP_SECRET: z.string(),
-  OBSERVE_APP_KEY: z.string(),
 });
 
 export const env = tmaApiEnvSchema.parse(process.env);

@@ -3,12 +3,15 @@ import eslint from '@eslint/js';
 import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended';
 import globals from 'globals';
 import tseslint from 'typescript-eslint';
-import { config } from '@tooling/eslint/base';
 
+// NOTE: `@tooling/eslint/base` is deliberately NOT used here. It already
+// registers the `@typescript-eslint` plugin via `tseslint.configs.recommended`,
+// and combining it with `recommendedTypeChecked` below makes ESLint fail with
+// `Cannot redefine plugin "@typescript-eslint"`. The API wants the
+// type-checked rules, so it owns its config.
 export default tseslint.config(
-  config,
   {
-    ignores: ['eslint.config.mjs'],
+    ignores: ['dist/**', 'eslint.config.mjs'],
   },
   eslint.configs.recommended,
   ...tseslint.configs.recommendedTypeChecked,
@@ -17,7 +20,6 @@ export default tseslint.config(
     languageOptions: {
       globals: {
         ...globals.node,
-        ...globals.jest,
       },
       sourceType: 'commonjs',
       parserOptions: {

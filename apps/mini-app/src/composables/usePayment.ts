@@ -11,7 +11,7 @@ export function usePayment() {
   let trackingPaymentId: string | null = null;
 
   const q = usePaymentsControllerCreatePayments();
-  const { tonConnectUI } = useTonConnectUI()
+  const { tonConnectUI } = useTonConnectUI();
 
   const pay = async (currency: Currency, amount: string) => {
     const { data: tx } = await q.mutateAsync({
@@ -21,7 +21,7 @@ export function usePayment() {
       },
     });
 
-    trackPayment(tx.id)
+    trackPayment(tx.id);
 
     await tonConnectUI.sendTransaction({
       validUntil: Math.floor(Date.now() / 1000) + 300,
@@ -70,7 +70,7 @@ export function usePayment() {
 
     if (trackingPaymentId) {
       socket.emit("payment.unsubscribe", {
-        orderId: trackingPaymentId,
+        paymentId: trackingPaymentId,
       });
     }
 
@@ -86,4 +86,3 @@ export function usePayment() {
     stopTracking,
   };
 }
-

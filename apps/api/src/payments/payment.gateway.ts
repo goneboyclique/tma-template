@@ -30,7 +30,7 @@ export class PaymentGateway {
     @ConnectedSocket() socket: Socket,
     @MessageBody() data: { paymentId: string },
   ) {
-    socket.join(data.paymentId);
+    void socket.join(data.paymentId);
   }
 
   @SubscribeMessage('payment.unsubscribe')
@@ -38,7 +38,7 @@ export class PaymentGateway {
     @ConnectedSocket() socket: Socket,
     @MessageBody() data: { paymentId: string },
   ) {
-    socket.leave(data.paymentId);
+    void socket.leave(data.paymentId);
   }
 
   emitUpdate(clientId: string, eventType: EventType, payload: PayloadType) {

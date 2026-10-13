@@ -3,10 +3,8 @@
   "version": "0.0.1",
   "private": true,
   "exports": {
-    "./user": "./contracts/user.ts",
     "./client/core": "./clients/core.ts",
     "./client/vue": "./clients/vue.ts",
-    "./client/react": "./clients/react.ts",
     "./config": "./fetcher.ts"
   },
   "scripts": {

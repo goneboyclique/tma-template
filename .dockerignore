@@ -39,3 +39,6 @@ docker-compose*.yaml
 Dockerfile*
 **/Dockerfile
 *.log
+
+# Compose files (not needed inside the image)
+docker-compose*
