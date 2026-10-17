@@ -5,54 +5,31 @@ configDotenv();
 
 const orvalConfigSchema = z.object({
   OPENAPI_INPUT_SRC: z.url(),
+  PAYMENT_OPENAPI_INPUT_SRC: z.url(),
 });
 
 const env = orvalConfigSchema.parse(process.env);
 const input = env.OPENAPI_INPUT_SRC;
 
+const output = (target: string) => ({
+  target,
+  client: "vue-query" as const,
+  mode: "single" as const,
+  override: {
+    mutator: {
+      path: "./fetcher.ts",
+      name: "customFetch",
+    },
+  },
+});
+
 export default {
   apiVue: {
     input,
-    output: {
-      target: "./clients/vue.ts",
-      client: "vue-query",
-      mode: "single",
-      override: {
-        mutator: {
-          path: "./fetcher.ts",
-          name: "customFetch",
-        },
-      },
-    },
+    output: output("./clients/vue.ts"),
   },
-
-  apiReact: {
-    input,
-    output: {
-      target: "./clients/react.ts",
-      client: "react-query",
-      mode: "single",
-      override: {
-        mutator: {
-          path: "./fetcher.ts",
-          name: "customFetch",
-        },
-      },
-    },
-  },
-
-  apiCore: {
-    input,
-    output: {
-      target: "./clients/core.ts",
-      client: "fetch",
-      mode: "single",
-      override: {
-        mutator: {
-          path: "./fetcher.ts",
-          name: "customFetch",
-        },
-      },
-    },
+  paymentVue: {
+    input: env.PAYMENT_OPENAPI_INPUT_SRC,
+    output: output("./clients/payment.ts"),
   },
 };

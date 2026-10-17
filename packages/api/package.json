@@ -6,6 +6,7 @@
     "./user": "./contracts/user.ts",
     "./client/core": "./clients/core.ts",
     "./client/vue": "./clients/vue.ts",
+    "./client/payment": "./clients/payment.ts",
     "./client/react": "./clients/react.ts",
     "./config": "./fetcher.ts"
   },

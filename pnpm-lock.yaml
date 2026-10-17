@@ -159,6 +159,9 @@ importers:
       '@pkg/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@tanstack/vue-query':
+        specifier: ^5.101.4
+        version: 5.101.4(vue@3.5.40(typescript@5.9.3))
       '@tma.js/sdk-vue':
         specifier: ^1.0.8
         version: 1.0.23(typescript@5.9.3)(vue@3.5.40(typescript@5.9.3))
@@ -7502,6 +7505,14 @@ snapshots:
 
   '@tanstack/query-core@5.101.4': {}
 
+  '@tanstack/vue-query@5.101.4(vue@3.5.40(typescript@5.9.3))':
+    dependencies:
+      '@tanstack/match-sorter-utils': 8.19.4
+      '@tanstack/query-core': 5.101.4
+      '@vue/devtools-api': 6.6.4
+      vue: 3.5.40(typescript@5.9.3)
+      vue-demi: 0.14.10(vue@3.5.40(typescript@5.9.3))
+
   '@tanstack/vue-query@5.101.4(vue@3.5.40(typescript@6.0.3))':
     dependencies:
       '@tanstack/match-sorter-utils': 8.19.4
@@ -11628,6 +11639,10 @@ snapshots:
       - msw
 
   vscode-uri@3.2.0: {}
+
+  vue-demi@0.14.10(vue@3.5.40(typescript@5.9.3)):
+    dependencies:
+      vue: 3.5.40(typescript@5.9.3)
 
   vue-demi@0.14.10(vue@3.5.40(typescript@6.0.3)):
     dependencies:
