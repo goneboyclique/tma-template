@@ -4,8 +4,19 @@ import { TonConnectButton, useTonWallet } from '@/tonconnect';
 import AppDisplayData, { type DisplayDataRow } from '@/components/AppDisplayData.vue';
 import AppLink from '@/components/AppLink.vue';
 import AppPage from '@/components/AppPage.vue';
+import { usePayment } from '@/composables/usePayment';
 
 const { wallet } = useTonWallet();
+const { pay, payment } = usePayment()
+
+const payTon = async () => {
+  pay('TON', '10000')
+}
+
+const payJetton = async () => {
+  pay('USDT', '10000')
+}
+
 
 const walletExtended = computed(() => {
   return wallet.value && 'imageUrl' in wallet.value ? wallet.value : null;
@@ -44,6 +55,9 @@ const rows = computed<DisplayDataRow[]>(() => {
     <div class="ton-connect-page__button-container">
       <TonConnectButton />
     </div>
+    <button @click="payTon">pay ton</button>
+    <button @click="payJetton">pay jeton</button>
+    <pre>{{ payment }}</pre>
   </AppPage>
 </template>
 
