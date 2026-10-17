@@ -52,6 +52,25 @@ export default defineConfig(({ mode }) => {
             });
           },
         },
+        "/ton-payment": {
+          target: "",
+          changeOrigin: true,
+          secure: false,
+          rewrite: (path) => path.replace(/^\/api/, ""),
+          configure(proxy) {
+            proxy.on("proxyReq", (proxyReq, req) => {
+              console.log(
+                `[proxy] ${req.method} ${req.url} → ${env.VITE_API_URL}${req.url}`,
+              );
+            });
+
+            proxy.on("proxyRes", (proxyRes, req) => {
+              console.log(
+                `[proxy] ${proxyRes.statusCode} ${req.method} ${req.url}`,
+              );
+            });
+          },
+        },
         "/socket.io": {
           target: env.VITE_API_URL,
           changeOrigin: true,

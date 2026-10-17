@@ -174,7 +174,7 @@ services:
       CORS_ORIGINS: ${CORS_ORIGINS:-*}
       RUN_MIGRATIONS: ${RUN_MIGRATIONS:-true}
 
-      API_PORT: 4020
+      PORT: 4020
 
     ports:
       - "4020:4020"
