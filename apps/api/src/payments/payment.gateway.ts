@@ -14,7 +14,7 @@ type EventType = 'payment.updated';
 type PayloadType = PaymentType;
 
 @WebSocketGateway({
-  namespace: 'payments',
+  namespace: 'ton-payment',
   cors: {
     origin: CORS_ORIGINS,
   },
@@ -42,9 +42,6 @@ export class PaymentGateway {
   }
 
   emitUpdate(clientId: string, eventType: EventType, payload: PayloadType) {
-    this.logger.log(
-      `Emit event ${eventType} to ${clientId} with payload: ${JSON.stringify(payload)}`,
-    );
     this.server.to(clientId).emit(eventType, payload);
   }
 }

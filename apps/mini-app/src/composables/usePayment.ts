@@ -41,11 +41,11 @@ export function usePayment() {
     trackingPaymentId = paymentId;
 
     socket = env.DEV
-      ? io("/payments", {
+      ? io("/ton-payment", {
           path: "/socket.io",
         })
       : io(`${import.meta.env.VITE_API_URL}/payments`, {
-          path: "/socket.io",
+          path: "/ton-payment",
         });
 
     socket.on("connect", () => {

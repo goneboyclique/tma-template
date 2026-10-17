@@ -3,9 +3,7 @@
   "generatorVersion": "1.0.0",
   "generatedAt": "2026-10-13T12:37:18.076Z",
   "outputPath": "/Users/devymurr/Projects/goneboyclique/ton-payment/packages/db/generated/zod",
-  "files": [
-    "schemas.ts"
-  ],
+  "files": ["schemas.ts"],
   "directories": [],
   "singleFileMode": true,
   "singleFileName": "schemas.ts"

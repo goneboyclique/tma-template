@@ -18,10 +18,10 @@ name: ton-payment
 services:
   ton-payment-api:
     # Build from source instead by replacing `image:` with:
-    build:
-      context: .
-      dockerfile: apps/api/Dockerfile
-    image: ${API_IMAGE:-ton-payment-api:latest}
+    # build:
+    #   context: .
+    #   dockerfile: apps/api/Dockerfile
+    image: ghcr.io/clayzenx/ton-payment-api:latest
 
     restart: unless-stopped
 

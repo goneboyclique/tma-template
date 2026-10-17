@@ -21,7 +21,7 @@ export type ApiClientConfig = {
  * configureClient({ baseUrl: "https://your-backend.com" });
  */
 let config: ApiClientConfig = {
-  baseUrl: "/api",
+  baseUrl: "/ton-payment",
   fetch: globalThis.fetch.bind(globalThis),
 };
 

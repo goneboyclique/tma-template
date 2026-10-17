@@ -32,11 +32,11 @@ export default defineConfig(({ mode }) => {
     server: {
       host: true,
       proxy: {
-        "/api": {
+        "/ton-payment": {
           target: env.VITE_API_URL ?? "http://localhost:4000/",
           changeOrigin: true,
           secure: false,
-          rewrite: (path) => path.replace(/^\/api/, ""),
+          rewrite: (path) => path.replace(/^\/ton-payment/, ""),
           configure(proxy) {
             proxy.on("proxyReq", (proxyReq, req) => {
               console.log(

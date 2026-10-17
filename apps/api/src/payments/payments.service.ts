@@ -71,7 +71,6 @@ export class PaymentsService {
       where: { id: paymentId },
     });
 
-    this.logger.log(`Payment ${paymentId} verified by ${txHash}`);
     this.paymentGateway.emitUpdate(paymentId, 'payment.updated', payment);
   }
 }
