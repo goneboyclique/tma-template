@@ -1,17 +1,20 @@
 import { z } from "zod";
-import { loadEnv, searchForWorkspaceRoot } from "vite";
-
-let env: z.infer<typeof schema>;
-const root = searchForWorkspaceRoot(process.cwd());
 
 const schema = z.object({
+  MODE: z.string(),
+  DEV: z.boolean(),
+  PROD: z.boolean(),
+  BASE_URL: z.string(),
+  SSR: z.boolean(),
+
   VITE_API_URL: z.url(),
-  VITE_HTTPS: z.coerce.boolean().default(false),
+  VITE_HTTPS: z.stringbool().default(false),
 });
 
-// for vite you should init env using this method
-export const initEnv = (mode: string) => {
-  env = schema.parse(loadEnv(mode, root, "VITE_"));
-};
+export type Env = z.infer<typeof schema>;
 
-export { env };
+export const getEnv = (source: Record<string, unknown>): Env =>
+  schema.parse(source);
+
+export const env = getEnv(import.meta.env);
+
