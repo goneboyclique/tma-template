@@ -58,6 +58,7 @@ export function usePayment() {
       if (updatedPayment.id !== trackingPaymentId) {
         return;
       }
+      stopTracking()
 
       payment.value = updatedPayment;
     });
