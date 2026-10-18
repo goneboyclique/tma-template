@@ -8,8 +8,6 @@ pnpm install
 
 ## setup env
 
-There are two kinds of env files, and mixing them up is the usual source of
-"works locally, breaks in docker":
 
 | file                | read by                            | db host     |
 | ------------------- | ---------------------------------- | ----------- |
@@ -29,31 +27,16 @@ values can never drift.
 cp .env.example .env
 ```
 
-- provide `packages/db/.env` (see `packages/db/.env.example`)
+
+## Dev mode (service discovery)
+For local development you need to have at least working postgres db service instance. You can use repo docker service, start them first
 
 ```sh
-cp packages/db/.env.example packages/db/.env
-```
-
-- provide `packages/api/.env` (see `packages/api/.env.example`)
-
-```sh
-cp packages/api/.env.example packages/api/.env
-```
-
-- provide `apps/api/.env` (see `apps/api/.env.example`)
-
-```sh
-cp apps/api/.env.example apps/api/.env
-```
-
-You can use repo docker services urls, start them first
-
-```sh
-docker compose up postgres redis --detach
+docker compose up postgres --detach
 ```
 
 ## Setup db (`packages/db/.env` required)
+Then you migrate
 
 ```sh
 pnpm db:generate && pnpm db:migrate && pnpm format
@@ -63,6 +46,12 @@ pnpm db:generate && pnpm db:migrate && pnpm format
 
 ```sh
 pnpm dev
+```
+
+For telegram mini app development we have experimental package that setup ssl and proxy. Output vite tma link can be used as mini-app entry url
+```sh
+pnpm start:tg-dev
+
 ```
 
 ## Prod (build)
@@ -76,7 +65,7 @@ pnpm build
 On the VPS, the only file to fill in is the root `.env`:
 
 ```sh
-cp .env.example .env   # then edit: POSTGRES_PASSWORD, CORS_ORIGINS
+cp .env.example .env   # then edit
 docker compose up --build --detach
 ```
 

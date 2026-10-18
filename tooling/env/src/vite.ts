@@ -17,4 +17,3 @@ export const getEnv = (source: Record<string, unknown>): Env =>
   schema.parse(source);
 
 export const env = getEnv(import.meta.env);
-

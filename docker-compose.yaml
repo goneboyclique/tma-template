@@ -20,11 +20,11 @@
 
 # Credentials are declared once (as parts) and the DSN is assembled here, so
 # the compose file and the database container can never drift apart.
-x-database-url: &database_url postgresql://${POSTGRES_USER:?required in .env}:${POSTGRES_PASSWORD:?required in .env}@postgres:5432/${POSTGRES_DB:?required in .env}
+x-database-url: &database_url postgresql://${POSTGRES_USER:?required in .env}:${POSTGRES_PASSWORD:?required in .env}@postgres:${POSTGRES_PORT:-5432}/${POSTGRES_DB:?required in .env}
 
 # Shared by `api` and `migrate` so both run the exact same image.
 x-api-image: &api_image
-  image: ${API_IMAGE:-archiveplay-api:latest}
+  image: ${API_IMAGE:-tma-api:latest}
   build:
     context: .
     dockerfile: ./apps/api/Dockerfile
@@ -151,6 +151,9 @@ services:
       retries: 5
       start_period: 20s
 
+  # ---------------------------------------------------------------------------
+  # Payment gateway API
+  # ---------------------------------------------------------------------------
   ton-payment-api:
     image: ghcr.io/clayzenx/ton-payment-api:latest
 
@@ -179,8 +182,6 @@ services:
     ports:
       - "4020:4020"
 
-    # Reaching a database that lives in another compose project requires
-    # joining its network. Uncomment both blocks and set NETWORK to it.
     networks:
       - app_network
 
@@ -189,21 +190,6 @@ services:
 volumes:
   postgres_data:
 
-# Docker bridge network.
-#
-# Every service joins this network.
-#
-#    api
-#     |
-#  postgres
-#     |
-#   redis
-#
-# Containers resolve each other by service name.
-#
-# postgres
-# redis
-# api
-#
+# Entire app network
 networks:
   app_network:
