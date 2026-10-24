@@ -41,7 +41,6 @@ Mixing these up is the usual cause of "works locally, breaks in docker":
 | `.env` (root)       | `docker compose`, **the API in dev**, Vite (mini-app) | `localhost` |
 | `packages/db/.env`  | prisma CLI (`db:generate`, `db:migrate`, `db:deploy`) | `localhost` |
 | `packages/api/.env` | orval (`sdk:generate`)                                | n/a         |
-| `apps/api/.env`     | nothing at the moment (see note below)                | `localhost` |
 
 Inside containers the database host is `postgres`, not `localhost`: compose
 assembles the container `DATABASE_URL` from `POSTGRES_USER` / `POSTGRES_PASSWORD` /
@@ -49,13 +48,12 @@ assembles the container `DATABASE_URL` from `POSTGRES_USER` / `POSTGRES_PASSWORD
 
 The API validates its env with `tooling/env/src/tma-api.ts`, which loads
 `../../.env` relative to `apps/api` — i.e. the **root `.env`**. Keep all API
-variables there; `apps/api/.env` is not loaded by the current env schema.
+variables there;
 
 ```sh
 cp .env.example .env
 cp packages/db/.env.example packages/db/.env
 cp packages/api/.env.example packages/api/.env
-cp apps/api/.env.example apps/api/.env   # optional, see note above
 ```
 
 API variables (validated with zod at boot; the process exits if a required one is missing):
@@ -122,15 +120,11 @@ pnpm --filter tma dev
 
 ### Client SDK
 
-With the API running (needs `OPENAPI_INPUT_SRC`, see `packages/api/.env`):
+With the API running (needs `OPENAPI_INPUT_SRC`, see `packages/api/.env.example`):
 
 ```sh
 pnpm sdk:generate   # regenerates packages/api/clients/{core,vue}.ts, then formats
 ```
-
-> The committed clients are **out of date**: they still describe the previous
-> payment-create response and a removed `user/find-unique` endpoint. Start the
-> API and re-run the command above to refresh them.
 
 ## Test and lint
 
@@ -158,7 +152,7 @@ Outputs: `apps/api/dist` (run with `pnpm --filter api start:prod` →
 ### API (Docker)
 
 The image is built by `apps/api/Dockerfile`: multi-stage, `turbo prune api --docker`
-→ `pnpm install` → `pnpm turbo build` → slim Node runtime running
+k `pnpm install` → `pnpm turbo build` → slim Node runtime running
 `node apps/api/dist/main.js` as a non-root user. **Build it from the repo root:**
 
 ```sh
@@ -228,8 +222,6 @@ Also update:
   `apps/mini-app/public/tonconnect-manifest.json` (they still point at template values).
 - The Mini App URL in BotFather to `https://<your-domain>/tma/`.
 
-`pnpm --filter tma deploy` (gh-pages) is inherited from the template and not
-used in this project.
 
 ## Commits
 
