@@ -1,5 +1,5 @@
-import { startTunnel } from "untun";
+import { forward } from "@ngrok/ngrok";
 
 export async function createTunnel(port: number) {
-  return startTunnel({ url: `http://localhost:${port}` as const });
+  return await forward({ addr: `localhost:${port}`, authtoken_from_env: true })
 }

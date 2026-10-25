@@ -106,6 +106,7 @@ pnpm start:tg-dev   # same, but first opens a public tunnel (untun) to :4000 and
                     # exports it as VITE_API_URL so Telegram can reach your machine
 ```
 
+- If you gona work with repo mini-app package you should generate client sdk for it `pnpm sdk:generate`
 - Swagger UI: `http://localhost:4000/api`, OpenAPI JSON: `http://localhost:4000/api-json`
 - Mini App dev URL is served under the `/tma` base path; Telegram requires HTTPS,
   so test inside Telegram through a tunnel (`start:tg-dev`) or with `VITE_HTTPS=true`.
@@ -221,7 +222,6 @@ Also update:
 - `manifestUrl` / `twaReturnUrl` in `apps/mini-app/src/main.ts` and
   `apps/mini-app/public/tonconnect-manifest.json` (they still point at template values).
 - The Mini App URL in BotFather to `https://<your-domain>/tma/`.
-
 
 ## Commits
 

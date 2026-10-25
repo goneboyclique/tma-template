@@ -11,6 +11,6 @@
     "tsx": "^4.20.3"
   },
   "dependencies": {
-    "untun": "^0.2.2"
+    "@ngrok/ngrok": "^1.7.0"
   }
 }
