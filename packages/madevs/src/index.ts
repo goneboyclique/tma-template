@@ -2,16 +2,24 @@ import { spawn } from "node:child_process";
 import { loadEnvFile } from "node:process";
 
 import { createTunnel } from "./tunnel.js";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 
-loadEnvFile(new URL("../../../.env", import.meta.url).pathname);
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const envPath = resolve(__dirname, '../../..', '.env');
+
+loadEnvFile(envPath);
 
 const tunnel = await createTunnel(4000);
-if (!tunnel) throw new Error("Untun tunnel is undefined");
+if (!tunnel) throw new Error("Tunnel is undefined");
 
-const apiUrl = await tunnel.getURL();
+const apiUrl = tunnel.url();
 
-const turbo = spawn("pnpm", ["-w", "exec", "turbo", "dev"], {
+const isWindows = process.platform === "win32";
+
+const turbo = spawn(isWindows ? "pnpm.cmd" : "pnpm", ["-w", "exec", "turbo", "dev"], {
   stdio: "inherit",
+  shell: true,
   env: {
     ...process.env,
     VITE_API_URL: apiUrl,
