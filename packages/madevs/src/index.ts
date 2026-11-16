@@ -1,20 +1,36 @@
 import { spawn } from "node:child_process";
+import { loadEnvFile } from "node:process";
 import { createTunnel } from "./tunnel.js";
+
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const envPath = resolve(__dirname, "../../..", ".env");
+
+loadEnvFile(envPath);
 
 const tunnel = await createTunnel(4000);
 if (!tunnel) throw new Error("Untun tunnel is undefined");
 
-const apiUrl = await tunnel.getURL();
+const apiUrl = tunnel.url();
 
 console.log(`API tunnel: ${apiUrl}`);
 
-const turbo = spawn("pnpm", ["-w", "exec", "turbo", "dev"], {
-  stdio: "inherit",
-  env: {
-    ...process.env,
-    VITE_API_URL: apiUrl,
+const isWindows = process.platform === "win32";
+
+const turbo = spawn(
+  isWindows ? "pnpm.cmd" : "pnpm",
+  ["-w", "exec", "turbo", "dev"],
+  {
+    stdio: "inherit",
+    shell: true,
+    env: {
+      ...process.env,
+      VITE_API_URL: apiUrl,
+    },
   },
-});
+);
 
 const shutdown = async () => {
   await tunnel?.close();

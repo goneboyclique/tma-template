@@ -1,7 +1,9 @@
 import { z } from "zod";
 import { configDotenv } from "dotenv";
 
-configDotenv();
+configDotenv({
+  path: "../../.env",
+});
 
 const orvalConfigSchema = z.object({
   OPENAPI_INPUT_SRC: z.url(),

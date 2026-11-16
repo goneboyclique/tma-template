@@ -8,7 +8,6 @@ pnpm install
 
 ## setup env
 
-
 | file                | read by                            | db host     |
 | ------------------- | ---------------------------------- | ----------- |
 | `.env` (root)       | `docker compose` + root-level CLIs | `postgres`  |
@@ -27,19 +26,26 @@ values can never drift.
 cp .env.example .env
 ```
 
-
 ## Dev mode (service discovery)
-For local development you need to have at least working postgres db service instance. You can use repo docker service, start them first
+
+For local development you need to have at least working postgres db service instance. For payment service you can use repo docker service, start them first
 
 ```sh
-docker compose up postgres --detach
+docker compose up postgres ton-payment-api --detach
 ```
 
-## Setup db (`packages/db/.env` required)
+## Setup db
+
 Then you migrate
 
 ```sh
 pnpm db:generate && pnpm db:migrate && pnpm format
+```
+
+## Setup client sdk
+
+```sh
+pnpm sdk:generate
 ```
 
 ## Dev mode
@@ -49,6 +55,7 @@ pnpm dev
 ```
 
 For telegram mini app development we have experimental package that setup ssl and proxy. Output vite tma link can be used as mini-app entry url
+
 ```sh
 pnpm start:tg-dev
 

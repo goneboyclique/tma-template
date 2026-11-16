@@ -177,10 +177,10 @@ services:
       CORS_ORIGINS: ${CORS_ORIGINS:-*}
       RUN_MIGRATIONS: ${RUN_MIGRATIONS:-true}
 
-      PORT: 4020
+      PORT: ${PAYMENT_API_PORT:-4020}
 
     ports:
-      - "4020:4020"
+      - "127.0.0.1:${PAYMENT_API_PORT:-4020}:4020"
 
     networks:
       - app_network

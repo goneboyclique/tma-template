@@ -15,5 +15,7 @@ async function bootstrap() {
   makeSwagger(app);
 
   await app.listen(env.PORT);
+
+  console.log(`Server started: ${await app.getUrl()}`);
 }
 bootstrap().catch(console.error);

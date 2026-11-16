@@ -4,7 +4,6 @@ packages:
   - tooling/*
 allowBuilds:
   '@nestjs/core': true
-  '@parcel/watcher': set this to true or false
   '@prisma/engines': true
   '@scarf/scarf': false
   esbuild: true
