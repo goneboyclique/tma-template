@@ -5,6 +5,9 @@ import { env } from "@tooling/env/vite";
 import { usePaymentsControllerCreatePayments } from "@pkg/api/client/payment";
 import { useTonConnectUI } from "@/tonconnect/useTonConnectUI";
 
+// TODO: Zod check here
+const PAYMENT_API_URL = import.meta.env.VITE_PAYMENT_API_URL;
+
 export function usePayment() {
   const payment = ref<PaymentType | null>(null);
   let socket: Socket | null;
@@ -40,13 +43,9 @@ export function usePayment() {
 
     trackingPaymentId = paymentId;
 
-    socket = env.DEV
-      ? io("/ton-payment", {
-          path: "/socket.io",
-        })
-      : io(`${import.meta.env.VITE_API_URL}/payments`, {
-          path: "/ton-payment",
-        });
+    const socket = io(`${PAYMENT_API_URL}/ton-payment`, {
+      path: "/socket.io",
+    });
 
     socket.on("connect", () => {
       socket?.emit("payment.subscribe", {

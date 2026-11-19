@@ -12,6 +12,8 @@ const base = "/tma";
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, workspaceRoot, "VITE_");
 
+  const PAYMENT_API_PROXY_URL = env.VITE_PAYMENT_API_URL;
+
   return {
     base,
     publicDir: "./public",
@@ -33,14 +35,14 @@ export default defineConfig(({ mode }) => {
       host: true,
       proxy: {
         "/api/payments": {
-          target: env.VITE_PAYMENT_API_URL ?? "http://localhost:4020",
+          target: PAYMENT_API_PROXY_URL,
           changeOrigin: true,
           secure: false,
           rewrite: (path) => path.replace(/^\/api/, ""),
           configure(proxy) {
-            proxy.on("proxyReq", (proxyReq, req) => {
+            proxy.on("proxyReq", (_, req) => {
               console.log(
-                `[proxy] ${req.method} ${req.url} → ${env.VITE_PAYMENT_API_URL}${req.url}`,
+                `[proxy] ${req.method} ${req.url} → ${PAYMENT_API_PROXY_URL}${req.url}`,
               );
             });
 
@@ -70,27 +72,8 @@ export default defineConfig(({ mode }) => {
             });
           },
         },
-        "/ton-payment": {
-          target: "",
-          changeOrigin: true,
-          secure: false,
-          rewrite: (path) => path.replace(/^\/api/, ""),
-          configure(proxy) {
-            proxy.on("proxyReq", (proxyReq, req) => {
-              console.log(
-                `[proxy] ${req.method} ${req.url} → ${env.VITE_API_URL}${req.url}`,
-              );
-            });
-
-            proxy.on("proxyRes", (proxyRes, req) => {
-              console.log(
-                `[proxy] ${proxyRes.statusCode} ${req.method} ${req.url}`,
-              );
-            });
-          },
-        },
         "/socket.io": {
-          target: env.VITE_PAYMENT_API_URL,
+          target: PAYMENT_API_PROXY_URL,
           changeOrigin: true,
           secure: false,
           ws: true,
@@ -98,7 +81,7 @@ export default defineConfig(({ mode }) => {
           configure(proxy) {
             proxy.on("proxyReq", (proxyReq, req) => {
               console.log(
-                `[proxy] ${req.method} ${req.url} → ${env.VITE_API_URL}${req.url}`,
+                `[proxy] ${req.method} ${req.url} → ${PAYMENT_API_PROXY_URL}${req.url}`,
               );
             });
 

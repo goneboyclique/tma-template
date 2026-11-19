@@ -61,6 +61,21 @@ export interface UserFindUniqueResDtoOutput {
   is_premium?: boolean | null;
 }
 
+export interface UserMeResDtoOutput {
+  id?: string;
+  first_name?: string;
+  /** @nullable */
+  last_name?: string | null;
+  /** @nullable */
+  photo_url?: string | null;
+  /** @nullable */
+  username?: string | null;
+  /** @nullable */
+  ton_wallet_address?: string | null;
+  /** @nullable */
+  is_premium?: boolean | null;
+}
+
 export interface UserUpdateTonAccountAddressDto {
   /** @nullable */
   ton_wallet_address?: string | null;
@@ -174,16 +189,17 @@ export const useUserControllerFindUnique = <
   );
 };
 
-export type userControllerFindMeResponse200 = {
-  data: void;
-  status: 200;
+export type userControllerFindMeResponseDefault = {
+  data: UserMeResDtoOutput;
+  status: number;
 };
 
-export type userControllerFindMeResponseSuccess =
-  userControllerFindMeResponse200 & {
+export type userControllerFindMeResponseError =
+  userControllerFindMeResponseDefault & {
     headers: Headers;
   };
-export type userControllerFindMeResponse = userControllerFindMeResponseSuccess;
+
+export type userControllerFindMeResponse = userControllerFindMeResponseError;
 
 export const getUserControllerFindMeUrl = () => {
   return `/user/me`;
@@ -207,7 +223,7 @@ export const getUserControllerFindMeQueryKey = () => {
 
 export const getUserControllerFindMeQueryOptions = <
   TData = Awaited<ReturnType<typeof userControllerFindMe>>,
-  TError = unknown,
+  TError = UserMeResDtoOutput,
 >(options?: {
   query?: Partial<
     UseQueryOptions<
@@ -236,11 +252,11 @@ export const getUserControllerFindMeQueryOptions = <
 export type UserControllerFindMeQueryResult = NonNullable<
   Awaited<ReturnType<typeof userControllerFindMe>>
 >;
-export type UserControllerFindMeQueryError = unknown;
+export type UserControllerFindMeQueryError = UserMeResDtoOutput;
 
 export function useUserControllerFindMe<
   TData = Awaited<ReturnType<typeof userControllerFindMe>>,
-  TError = unknown,
+  TError = UserMeResDtoOutput,
 >(
   options?: {
     query?: Partial<

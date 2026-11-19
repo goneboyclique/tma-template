@@ -5,7 +5,7 @@ import type {
   WalletInfoWithOpenMethod,
 } from "@tonconnect/ui";
 import { useTonConnectUI } from "./useTonConnectUI";
-import { useUserControllerUpdateTonAccountAddress } from "@pkg/api/client/vue";
+import { useUserControllerUpdateTonAccountAddress } from "@pkg/api/client/payment";
 
 export function useTonWallet() {
   const wallet = shallowRef<

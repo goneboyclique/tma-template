@@ -6,4 +6,4 @@ import { CacheModule } from './common/modules/cache.module';
 @Module({
   imports: [PrismaModule, CacheModule, UserModule],
 })
-export class AppModule { }
+export class AppModule {}
