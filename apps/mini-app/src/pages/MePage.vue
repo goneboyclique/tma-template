@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { initData, useSignal } from '@tma.js/sdk-vue';
-import { useUserControllerFindMe } from '@pkg/api/client/vue';
+import { useUserControllerFindMe } from '@pkg/api/client/payment';
 import { toUserFriendlyAddress } from '@tonconnect/ui';
 import AppPage from '@/components/AppPage.vue';
 import AppDisplayData, { type DisplayDataRow } from '@/components/AppDisplayData.vue';

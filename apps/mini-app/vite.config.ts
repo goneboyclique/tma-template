@@ -34,7 +34,7 @@ export default defineConfig(({ mode }) => {
     server: {
       host: true,
       proxy: {
-        "/api/payments": {
+        "/api/ton-payment": {
           target: PAYMENT_API_PROXY_URL,
           changeOrigin: true,
           secure: false,

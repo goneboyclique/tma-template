@@ -84,7 +84,7 @@ export type userControllerFindMeResponseError =
 export type userControllerFindMeResponse = userControllerFindMeResponseError;
 
 export const getUserControllerFindMeUrl = () => {
-  return `/user/me`;
+  return `/ton-payment/user/me`;
 };
 
 export const userControllerFindMe = async (
@@ -100,7 +100,7 @@ export const userControllerFindMe = async (
 };
 
 export const getUserControllerFindMeQueryKey = () => {
-  return ["user", "me"] as const;
+  return ["ton-payment", "user", "me"] as const;
 };
 
 export const getUserControllerFindMeQueryOptions = <
@@ -183,7 +183,7 @@ export type userControllerUpdateTonAccountAddressResponse =
   userControllerUpdateTonAccountAddressResponseSuccess;
 
 export const getUserControllerUpdateTonAccountAddressUrl = () => {
-  return `/user/update-ton-account-address`;
+  return `/ton-payment/user/update-ton-account-address`;
 };
 
 export const userControllerUpdateTonAccountAddress = async (
@@ -286,7 +286,7 @@ export type paymentsControllerCreatePaymentsResponse =
   paymentsControllerCreatePaymentsResponseError;
 
 export const getPaymentsControllerCreatePaymentsUrl = () => {
-  return `/payments/create`;
+  return `/ton-payment/create`;
 };
 
 export const paymentsControllerCreatePayments = async (

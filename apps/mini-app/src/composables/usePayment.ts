@@ -5,7 +5,6 @@ import { env } from "@tooling/env/vite";
 import { usePaymentsControllerCreatePayments } from "@pkg/api/client/payment";
 import { useTonConnectUI } from "@/tonconnect/useTonConnectUI";
 
-// TODO: Zod check here
 const PAYMENT_API_URL = import.meta.env.VITE_PAYMENT_API_URL;
 
 export function usePayment() {

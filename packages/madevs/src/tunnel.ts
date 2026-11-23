@@ -7,8 +7,6 @@ export async function createTunnel(port: number) {
       authtoken_from_env: true,
     });
 
-    console.log("Tunnel:", listener.url());
-
     return listener;
   } catch (error) {
     console.error("Ngrok error:", error);
