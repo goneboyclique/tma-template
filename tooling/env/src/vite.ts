@@ -13,7 +13,9 @@ const schema = z.object({
 
 export type Env = z.infer<typeof schema>;
 
-export const getEnv = (source: Record<string, unknown>): Env =>
-  schema.parse(source);
+export const getEnv = (source: Record<string, unknown>): Env => {
+  console.log('Vite env:', import.meta.env);
+  return schema.parse(source);
+}
 
 export const env = getEnv(import.meta.env);
