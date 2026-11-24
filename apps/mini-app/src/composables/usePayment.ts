@@ -42,9 +42,16 @@ export function usePayment() {
 
     trackingPaymentId = paymentId;
 
-    const socket = io(`${PAYMENT_API_URL}/ton-payment`, {
-      path: "/socket.io",
-    });
+    const socket = io(
+      import.meta.env.DEV
+        ? PAYMENT_API_URL
+        : `${PAYMENT_API_URL}/ton-payment`,
+      {
+        path: import.meta.env.DEV
+          ? `${import.meta.env.BASE_URL}/socket.io`
+          : "/socket.io",
+      },
+    );
 
     socket.on("connect", () => {
       socket?.emit("payment.subscribe", {

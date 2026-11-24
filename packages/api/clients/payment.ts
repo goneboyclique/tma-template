@@ -20,7 +20,7 @@ import type {
 
 import { unref } from "vue";
 
-import { customFetch } from "../fetcher";
+import { paymentFetcher } from "../fetcher";
 export interface UserMeResDtoOutput {
   id?: string;
   first_name?: string;
@@ -69,8 +69,6 @@ type AwaitedInput<T> = PromiseLike<T> | T;
 
 type Awaited<O> = O extends AwaitedInput<infer T> ? T : never;
 
-type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
-
 export type userControllerFindMeResponseDefault = {
   data: UserMeResDtoOutput;
   status: number;
@@ -90,7 +88,7 @@ export const getUserControllerFindMeUrl = () => {
 export const userControllerFindMe = async (
   options?: RequestInit,
 ): Promise<userControllerFindMeResponse> => {
-  return customFetch<userControllerFindMeResponse>(
+  return paymentFetcher<userControllerFindMeResponse>(
     getUserControllerFindMeUrl(),
     {
       ...options,
@@ -114,15 +112,14 @@ export const getUserControllerFindMeQueryOptions = <
       TData
     >
   >;
-  request?: SecondParameter<typeof customFetch>;
 }) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {};
+  const { query: queryOptions } = options ?? {};
 
   const queryKey = getUserControllerFindMeQueryKey();
 
   const queryFn: QueryFunction<
     Awaited<ReturnType<typeof userControllerFindMe>>
-  > = ({ signal }) => userControllerFindMe({ signal, ...requestOptions });
+  > = ({ signal }) => userControllerFindMe({ signal });
 
   return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
     Awaited<ReturnType<typeof userControllerFindMe>>,
@@ -148,7 +145,6 @@ export function useUserControllerFindMe<
         TData
       >
     >;
-    request?: SecondParameter<typeof customFetch>;
   },
   queryClient?: QueryClient,
 ): UseQueryReturnType<TData, TError> & {
@@ -190,7 +186,7 @@ export const userControllerUpdateTonAccountAddress = async (
   userUpdateTonAccountAddressDto: UserUpdateTonAccountAddressDto,
   options?: RequestInit,
 ): Promise<userControllerUpdateTonAccountAddressResponse> => {
-  return customFetch<userControllerUpdateTonAccountAddressResponse>(
+  return paymentFetcher<userControllerUpdateTonAccountAddressResponse>(
     getUserControllerUpdateTonAccountAddressUrl(),
     {
       ...options,
@@ -211,7 +207,6 @@ export const getUserControllerUpdateTonAccountAddressMutationOptions = <
     { data: UserUpdateTonAccountAddressDto },
     TContext
   >;
-  request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<
   Awaited<ReturnType<typeof userControllerUpdateTonAccountAddress>>,
   TError,
@@ -219,13 +214,13 @@ export const getUserControllerUpdateTonAccountAddressMutationOptions = <
   TContext
 > => {
   const mutationKey = ["userControllerUpdateTonAccountAddress"];
-  const { mutation: mutationOptions, request: requestOptions } = options
+  const { mutation: mutationOptions } = options
     ? options.mutation &&
       "mutationKey" in options.mutation &&
       options.mutation.mutationKey
       ? options
       : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined };
+    : { mutation: { mutationKey } };
 
   const mutationFn: MutationFunction<
     Awaited<ReturnType<typeof userControllerUpdateTonAccountAddress>>,
@@ -233,7 +228,7 @@ export const getUserControllerUpdateTonAccountAddressMutationOptions = <
   > = (props) => {
     const { data } = props ?? {};
 
-    return userControllerUpdateTonAccountAddress(data, requestOptions);
+    return userControllerUpdateTonAccountAddress(data);
   };
 
   return { mutationFn, ...mutationOptions };
@@ -257,7 +252,6 @@ export const useUserControllerUpdateTonAccountAddress = <
       { data: UserUpdateTonAccountAddressDto },
       TContext
     >;
-    request?: SecondParameter<typeof customFetch>;
   },
   queryClient?: QueryClient,
 ): UseMutationReturnType<
@@ -293,7 +287,7 @@ export const paymentsControllerCreatePayments = async (
   paymentCreateReqDto: PaymentCreateReqDto,
   options?: RequestInit,
 ): Promise<paymentsControllerCreatePaymentsResponse> => {
-  return customFetch<paymentsControllerCreatePaymentsResponse>(
+  return paymentFetcher<paymentsControllerCreatePaymentsResponse>(
     getPaymentsControllerCreatePaymentsUrl(),
     {
       ...options,
@@ -314,7 +308,6 @@ export const getPaymentsControllerCreatePaymentsMutationOptions = <
     { data: PaymentCreateReqDto },
     TContext
   >;
-  request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<
   Awaited<ReturnType<typeof paymentsControllerCreatePayments>>,
   TError,
@@ -322,13 +315,13 @@ export const getPaymentsControllerCreatePaymentsMutationOptions = <
   TContext
 > => {
   const mutationKey = ["paymentsControllerCreatePayments"];
-  const { mutation: mutationOptions, request: requestOptions } = options
+  const { mutation: mutationOptions } = options
     ? options.mutation &&
       "mutationKey" in options.mutation &&
       options.mutation.mutationKey
       ? options
       : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined };
+    : { mutation: { mutationKey } };
 
   const mutationFn: MutationFunction<
     Awaited<ReturnType<typeof paymentsControllerCreatePayments>>,
@@ -336,7 +329,7 @@ export const getPaymentsControllerCreatePaymentsMutationOptions = <
   > = (props) => {
     const { data } = props ?? {};
 
-    return paymentsControllerCreatePayments(data, requestOptions);
+    return paymentsControllerCreatePayments(data);
   };
 
   return { mutationFn, ...mutationOptions };
@@ -360,7 +353,6 @@ export const usePaymentsControllerCreatePayments = <
       { data: PaymentCreateReqDto },
       TContext
     >;
-    request?: SecondParameter<typeof customFetch>;
   },
   queryClient?: QueryClient,
 ): UseMutationReturnType<

@@ -13,14 +13,14 @@ const orvalConfigSchema = z.object({
 const env = orvalConfigSchema.parse(process.env);
 const input = env.OPENAPI_INPUT_SRC;
 
-const output = (target: string) => ({
+const output = (target: string, fetcherName: string) => ({
   target,
   client: "vue-query" as const,
   mode: "single" as const,
   override: {
     mutator: {
       path: "./fetcher.ts",
-      name: "customFetch",
+      name: fetcherName,
     },
   },
 });
@@ -28,10 +28,10 @@ const output = (target: string) => ({
 export default {
   apiVue: {
     input,
-    output: output("./clients/vue.ts"),
+    output: output("./clients/vue.ts", "apiFetcher"),
   },
   paymentVue: {
     input: env.PAYMENT_OPENAPI_INPUT_SRC,
-    output: output("./clients/payment.ts"),
+    output: output("./clients/payment.ts", "paymentFetcher"),
   },
 };

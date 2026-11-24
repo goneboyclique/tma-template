@@ -12,7 +12,9 @@ const base = "/tma-template";
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, workspaceRoot, "VITE_");
 
-  const PAYMENT_API_PROXY_URL = env.VITE_PAYMENT_API_URL;
+  const PAYMENT_API_PROXY_URL =
+    env.VITE_PAYMENT_API_PROXY_URL || "http://localhost:4020";
+  const API_PROXY_URL = env.VITE_API_PROXY_URL || "http://localhost:4000";
 
   return {
     base,
@@ -34,11 +36,32 @@ export default defineConfig(({ mode }) => {
     server: {
       host: true,
       proxy: {
-        "/api/ton-payment": {
+        [`${base}/socket.io`]: {
           target: PAYMENT_API_PROXY_URL,
           changeOrigin: true,
           secure: false,
-          rewrite: (path) => path.replace(/^\/api/, ""),
+          ws: true,
+          rewrite: (path) => path.replace(base, ""),
+          configure(proxy) {
+            proxy.on("proxyReq", (_, req) => {
+              console.log(
+                `[proxy] ${req.method} ${req.url} → ${PAYMENT_API_PROXY_URL}${req.url}`,
+              );
+            });
+
+            proxy.on("proxyRes", (proxyRes, req) => {
+              console.log(
+                `[proxy] ${proxyRes.statusCode} ${req.method} ${req.url}`,
+              );
+            });
+          },
+        },
+        "/ton-payment": {
+          target: PAYMENT_API_PROXY_URL,
+          changeOrigin: true,
+          secure: false,
+          ws: true,
+          rewrite: (path) => path.replace(/^\/ton-payment/, ""),
           configure(proxy) {
             proxy.on("proxyReq", (_, req) => {
               console.log(
@@ -54,34 +77,14 @@ export default defineConfig(({ mode }) => {
           },
         },
         "/api": {
-          target: env.VITE_API_URL ?? "http://localhost:4000/",
+          target: API_PROXY_URL,
           changeOrigin: true,
           secure: false,
           rewrite: (path) => path.replace(/^\/api/, ""),
           configure(proxy) {
-            proxy.on("proxyReq", (proxyReq, req) => {
+            proxy.on("proxyReq", (_, req) => {
               console.log(
                 `[proxy] ${req.method} ${req.url} → ${env.VITE_API_URL}${req.url}`,
-              );
-            });
-
-            proxy.on("proxyRes", (proxyRes, req) => {
-              console.log(
-                `[proxy] ${proxyRes.statusCode} ${req.method} ${req.url}`,
-              );
-            });
-          },
-        },
-        "/socket.io": {
-          target: PAYMENT_API_PROXY_URL,
-          changeOrigin: true,
-          secure: false,
-          ws: true,
-          rewrite: (path) => path.replace(base, ""),
-          configure(proxy) {
-            proxy.on("proxyReq", (proxyReq, req) => {
-              console.log(
-                `[proxy] ${req.method} ${req.url} → ${PAYMENT_API_PROXY_URL}${req.url}`,
               );
             });
 
