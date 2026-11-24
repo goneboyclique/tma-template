@@ -6,7 +6,7 @@ import vueDevTools from "vite-plugin-vue-devtools";
 import mkcert from "vite-plugin-mkcert";
 
 const workspaceRoot = searchForWorkspaceRoot(process.cwd());
-const base = "/tma";
+const base = "/tma-template";
 
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
