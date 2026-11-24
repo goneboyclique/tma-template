@@ -19,6 +19,13 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
+    environment:
+      name: github-pages
+
+    env:
+      VITE_API_URL: ${{ vars.VITE_API_URL }}
+      VITE_PAYMENT_API_URL: ${{ vars.VITE_PAYMENT_API_URL }}
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
