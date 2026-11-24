@@ -36,7 +36,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Build mini-app
-        run: pnpm --filter mini-app build
+        run: pnpm --filter tma build-only
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
